@@ -1,0 +1,12 @@
+[project]
+name = "ProjetMonitor"
+version = "1.0.0"
+dependencies = []
+
+[tool.setuptools]
+packages = [
+    "Banque",
+    "Cesu",
+    "LBP",
+    "Monitor"
+]

@@ -1,0 +1,55 @@
+# --- Environnements Python ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- Fichiers Python compilés ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- Build / Packaging ---
+build/
+dist/
+*.egg-info/
+*.egg
+
+# --- Logs / sorties ---
+*.log
+*.tmp
+*.csv
+
+# --- VSCode ---
+.vscode/
+# (Si tu veux garder .vscode, retire cette ligne)
+
+# --- Config système / OS ---
+.DS_Store
+Thumbs.db
+
+# --- Virtualenv Windows ---
+Scripts/
+Include/
+Lib/
+
+# --- Cache divers ---
+.cache/
+.ipynb_checkpoints/
+
+# --- Tests / coverage ---
+.coverage
+htmlcov/
+.cache/
+pytest_cache/
+
+# --- Fichiers temporaires ---
+*.bak
+*.old
+*.orig
+
+# --- Fichiers sensibles éventuels ---
+*.key
+*.pem
+*.crt
