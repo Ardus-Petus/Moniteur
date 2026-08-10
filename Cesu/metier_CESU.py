@@ -13,11 +13,11 @@ class ExtractionMetier:
         self.oHTML = None
 
     def run(self):
-        callback = self.context['putgui']
-        trt = self.context['traitement']
+        getgui = self.context['getgui']
+        putgui = self.context['putgui']
      
         def _send(msgtype:str, value:Any):
-            callback(msgtype, value)
+            putgui(msgtype, value)
         def _trace(msg:str):
             _send("log", msg+'\n')
 
@@ -26,6 +26,12 @@ class ExtractionMetier:
             if self.oHTML:
                 self.oHTML.proc.terminate()
         self.context['nettoyage'] = nettoyage
+
+    
+        _trace("Choisir un traitement")
+        dic = getgui('form')
+        trt = dic['combo']
+        _trace(f'traitement choisi: {trt}')
 
         _send('title', f'CESU - {trt}')
             
@@ -58,11 +64,8 @@ class ExtractionMetier:
             parser.getElement('//a[text()="Tableau de bord"]').click()
         time.sleep(0.5)
 
-        # if not driver.current_url.startswith('https://www.cesu.urssaf.fr/decla/index.html?page=page_empl_tableau_bord'):
-        #     raise RuntimeError(f"Erreur logique d'URL: {driver.current_url}")
         # On est sur le tableau de bord.
-        _trace(f"Choix du traitement... {trt}")
-
+       
         dict = {'prelevements':"https://www.cesu.urssaf.fr/decla/index.html?page=page_empl_mes_prelevements&LANG=FR",
                 'declarations':"https://www.cesu.urssaf.fr/decla/index.html?page=page_empl_mes_declarations&LANG=FR"}
 
@@ -118,7 +121,6 @@ class ExtractionMetier:
             # Traitement des déclarations
             #--------------------------------------
 
-            waitFor("page_empl_mes_declarations", 30)
             _trace("Page déclarations")    
             result:defaultdict[str, list[tuple]] = defaultdict(list)
             parser.getElementById('button', 'periodeSpecifique').click()

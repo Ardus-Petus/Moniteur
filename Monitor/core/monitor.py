@@ -38,6 +38,7 @@ class Monitor():
         if nettoyage: nettoyage()
 
     def test_presentation(self):
+        self.filter = None
         clsPresentation, pos_gui, pos_appli = \
             self.context['core'].get('presentation',[None, None, None]) 
         if clsPresentation:
@@ -51,6 +52,7 @@ class Monitor():
     def wrap_metier(self):
         """Lance l'application métier dans un thread."""
         self.context['appli']['putgui'] = self.putGUI
+        self.context['appli']['getgui'] = self.getGUI
  
         appliMetier = self.context['core']['application']
         metier = appliMetier(self.context['appli'])
@@ -72,6 +74,11 @@ class Monitor():
           
              # transmettre directement au GUI
         gui_queue.put((msg_type, payload))
+
+    def getGUI(self, payload):
+        self.putGUI('input', payload)
+        _, payload = metier_queue.get(True)
+        return payload
 
 class Context(dict):
     def __init__(self):

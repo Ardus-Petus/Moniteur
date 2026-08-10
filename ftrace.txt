@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "o:\OneDrive\Développements\Python\Essais\Moniteur\Monitor\core\monitor.py", line 61, in wrap_metier
+    metier.run()
+    ~~~~~~~~~~^^
+  File "o:\OneDrive\Développements\Python\Essais\Moniteur\Cesu\metier_CESU.py", line 127, in run
+    waitFor("page_empl_mes_declarations", 30)
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "o:\OneDrive\Développements\Python\Essais\Moniteur\Monitor\core\chrome.py", line 82, in waitFor
+    WebDriverWait(self.driver, delay).until(EC.url_matches(url))
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\laure\AppData\Local\Programs\Python\Python314\Lib\site-packages\selenium\webdriver\support\wait.py", line 121, in until
+    raise TimeoutException(message, screen, stacktrace)
+selenium.common.exceptions.TimeoutException: Message: 
+
