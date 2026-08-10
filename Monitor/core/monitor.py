@@ -75,9 +75,9 @@ class Monitor():
              # transmettre directement au GUI
         gui_queue.put((msg_type, payload))
 
-    def getGUI(self, payload):
+    def getGUI(self, payload, timeout=60):
         self.putGUI('input', payload)
-        _, payload = metier_queue.get(True)
+        _, payload = metier_queue.get(True,timeout=timeout)
         return payload
 
 class Context(dict):

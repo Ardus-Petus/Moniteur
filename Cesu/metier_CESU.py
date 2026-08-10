@@ -29,7 +29,7 @@ class ExtractionMetier:
 
     
         _trace("Choisir un traitement")
-        dic = getgui('form')
+        dic = getgui('form', 10)
         trt = dic['combo']
         _trace(f'traitement choisi: {trt}')
 
@@ -66,14 +66,14 @@ class ExtractionMetier:
 
         # On est sur le tableau de bord.
        
-        dict = {'prelevements':"https://www.cesu.urssaf.fr/decla/index.html?page=page_empl_mes_prelevements&LANG=FR",
+        URLs = {'prelevements':"https://www.cesu.urssaf.fr/decla/index.html?page=page_empl_mes_prelevements&LANG=FR",
                 'declarations':"https://www.cesu.urssaf.fr/decla/index.html?page=page_empl_mes_declarations&LANG=FR"}
 
-        driver.get(dict[trt])
+        driver.get(URLs[trt])
         if trt == 'prelevements':
             #--------------------------------------
             # Traitement des prélèvements
-            #--------------------------------------
+            #-----------,---------------------------
             time.sleep(0.5)
             _trace("Page prélèvements")    
             result:defaultdict[str, list[tuple]] = defaultdict(list)
@@ -127,7 +127,7 @@ class ExtractionMetier:
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight)");
             time.sleep(0.5)
             declarations = parser.getElements('//div[@id="resultatsAffiches"]/div') 
-            pass
+
             for div_declaration in declarations[::-1]:
                 driver.execute_script("arguments[0].scrollIntoView(true)", div_declaration)
                 div_data = parser.getElementByClass('div', 'bloc_accordeon', div_declaration)

@@ -4,7 +4,6 @@ import tkinter.font as tkfont
 from tkinter import ttk
 import queue
 from Monitor.utils import winmgt
-from typing import Any
 
 # ============================================================
 # GUI
@@ -132,6 +131,7 @@ def gui_update(_gui: gui, root: tk.Tk):
         setpos = _gui.context.get('position')
         if setpos:
             setpos(ctypes.windll.user32.GetParent(root.winfo_id()))
+        _gui.premier_appel = False
   
     def setEntry(field, value):
         field.delete(0, 'end')
@@ -141,7 +141,7 @@ def gui_update(_gui: gui, root: tk.Tk):
             msg_type, payload = _gui.gui_queue.get_nowait()
 
             if msg_type == 'title':
-                 root.title(payload)
+                root.title(payload)
 
             elif msg_type == "log":
                 _gui.log.insert("end", payload)

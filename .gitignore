@@ -20,6 +20,7 @@ dist/
 *.log
 *.tmp
 *.csv
+*.txt
 
 # --- VSCode ---
 .vscode/

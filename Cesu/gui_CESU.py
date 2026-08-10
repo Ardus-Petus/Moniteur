@@ -163,6 +163,7 @@ def gui_update(_gui: gui, root: tk.Tk):
         setpos = _gui.context.get('position')
         if setpos:
             setpos(ctypes.windll.user32.GetParent(root.winfo_id()))
+    _gui.premier_appel = False
  
     def setEntry(field, value):
         field.delete(0, 'end')
