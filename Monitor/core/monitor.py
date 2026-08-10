@@ -3,8 +3,7 @@ import threading
 import queue
 import tkinter as tk
 from typing import Any
-from Monitor.core.wrapper import Wrapper           # Application
-
+import traceback
 # Queues
 gui_queue : queue.Queue[tuple[str, Any]]= queue.Queue()
 metier_queue : queue.Queue[tuple[str, Any]]= queue.Queue()
@@ -27,7 +26,8 @@ class Monitor():
         
         # Lancement de l'application dans un thread
         self.context['appli']['queues'] = gui_queue, metier_queue
-        t = threading.Thread(target=self.lancer_metier, daemon=True)
+        self.test_presentation()
+        t = threading.Thread(target=self.wrap_metier, daemon=True)
         t.start()
 
         # Affichage du GUI dans le Thread principal
@@ -37,7 +37,38 @@ class Monitor():
         nettoyage = self.context['appli'].get("nettoyage")
         if nettoyage: nettoyage()
 
-    def lancer_metier(self):
+    def test_presentation(self):
+        clsPresentation, pos_gui, pos_appli = \
+            self.context['core'].get('presentation',[None, None, None]) 
+        if clsPresentation:
+            presentation = clsPresentation()
+            if hasattr(presentation, 'filter'):
+                self.filter = presentation.filter
+            self.context['gui']['position']=presentation.position(pos_gui)
+            self.context['appli']['position']=presentation.position(pos_appli)
+            self.pos_appli = presentation.position(pos_appli)
+
+    def wrap_metier(self):
         """Lance l'application métier dans un thread."""
-        wrap = Wrapper(self.context)
-        wrap.run()
+        self.context['appli']['putgui'] = self.putGUI
+ 
+        appliMetier = self.context['core']['application']
+        metier = appliMetier(self.context['appli'])
+
+        try:
+            metier.run()
+        except Exception as err:
+            with open('.\\ftrace.txt', 'w') as dump:
+                dump.write(traceback.format_exc())
+            self.putGUI("log", "Fin anormale du programme")
+            self.putGUI("Erreur", f"{err.__class__.__name__} : {err}")
+        return True
+
+    def putGUI(self, msg_type:str, payload:Any):
+        if self.filter:
+            if self.filter(msg_type, payload, self.pos_appli):
+                return
+            # réactions côté présentation
+          
+             # transmettre directement au GUI
+        gui_queue.put((msg_type, payload))
