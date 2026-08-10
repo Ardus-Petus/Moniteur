@@ -72,3 +72,29 @@ class Monitor():
           
              # transmettre directement au GUI
         gui_queue.put((msg_type, payload))
+
+class Context(dict):
+    def __init__(self):
+        self['gui']={}
+        self['core']={}
+        self['appli']={}
+        self.gui=self['gui']
+        self.core=self['core']
+        self.appli=self['appli']
+
+    def set_application(self, appli):
+        if not callable(appli):
+            raise TypeError("Application not callable")
+        self.core['application'] = appli
+
+    def set_gui(self, gui, update):
+        self.core['gui']=(gui, update)
+
+    def set_presentation(self, pres, pos_gui, pos_appli):
+        self.core['presentation']=(pres, pos_gui, pos_appli)
+
+    def set_appli_param(self, key, value):
+        self.appli[key]=value
+
+    def set_gui_param(self, key, value):
+        self.gui[key]=value
