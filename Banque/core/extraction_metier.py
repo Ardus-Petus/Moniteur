@@ -16,6 +16,7 @@ class ExtractionMetier:
         self.context = context
         self.oHTML:HTML|None = None
         self.oXL:Excel|None = None
+        locale.setlocale(category=locale.LC_ALL, locale='')
 
     def run(self):
         callback = self.context['putgui']

@@ -67,9 +67,9 @@ def getChromeWindowFromPid(pid: int) -> int:
     for _hwnd, _pid, _ in result:
         if _pid == pid: return _hwnd
     with open('hwnds',"w") as dump:
-        dump.write(f'pid demandé: {pid}')
+        dump.write(f'pid demandé: {pid}\n')
         for _hwnd, _pid, _title in result:
-            dump.write(f'hwnd:{_hwnd}, pid:{_pid}, title:{_title}')
+            dump.write(f'hwnd:{_hwnd}, pid:{_pid}, title:{_title}\n')
 
                    
     raise ValueError(f"Aucune fenêtre Chrome trouvée pour le PID {pid}.")
