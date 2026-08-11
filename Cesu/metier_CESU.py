@@ -26,14 +26,6 @@ class ExtractionMetier:
             if self.oHTML:
                 self.oHTML.proc.terminate()
         self.context['nettoyage'] = nettoyage
-
-    
-        _trace("Choisir un traitement")
-        dic = getgui('form', 10)
-        trt = dic['combo']
-        _trace(f'traitement choisi: {trt}')
-
-        _send('title', f'CESU - {trt}')
             
         # Ouverture HTML
         self.oHTML = ChromeDriver('https://www.cesu.urssaf.fr/info/accueil.html')
@@ -45,6 +37,7 @@ class ExtractionMetier:
 
         # Demander à la présentation de redimensionnerr la fenêtre
         _send("html_opened", self.oHTML.hwnd)
+        _send('title', f'CESU')
 
         _trace("Connexion au site...")
 
@@ -64,6 +57,13 @@ class ExtractionMetier:
             parser.getElement('//a[text()="Tableau de bord"]').click()
         time.sleep(0.5)
 
+
+        _trace("Choisir un traitement")
+        dic = getgui('form', 999999)
+        trt = dic['combo']
+        _trace(f'traitement choisi: {trt}')
+
+        _send('title', f'CESU - {trt}')
         # On est sur le tableau de bord.
        
         URLs = {'prelevements':"https://www.cesu.urssaf.fr/decla/index.html?page=page_empl_mes_prelevements&LANG=FR",
@@ -125,7 +125,7 @@ class ExtractionMetier:
             result:defaultdict[str, list[tuple]] = defaultdict(list)
             parser.getElementById('button', 'periodeSpecifique').click()
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight)");
-            time.sleep(0.5)
+            time.sleep(2)
             declarations = parser.getElements('//div[@id="resultatsAffiches"]/div') 
 
             for div_declaration in declarations[::-1]:

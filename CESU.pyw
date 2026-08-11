@@ -10,5 +10,5 @@ context.set_application(application)
 context.set_gui(gui, gui_update)
 context.set_presentation(Presentation, 'gauche', 'droite')
 
-app = Monitor(context) 
+app = Monitor(context)
 app.run()          # Application
