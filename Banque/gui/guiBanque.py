@@ -37,7 +37,7 @@ class gui:
         self.row_height = int(12 * scaling)   # 12 = hauteur "normale" de base
         #root.title("Extraction des opérations bancaires")
         root.title(__file__)
-        icon_path = os.path.join(os.path.dirname(__file__), 'moulinette.ico')
+        icon_path = os.path.join(os.path.dirname(__file__), '_gui_.ico')
         root.iconbitmap(icon_path) #type: ignore
         W = root.winfo_screenwidth()
         #H = root.winfo_screenheight()
@@ -201,14 +201,10 @@ def gui_update(_gui: gui, root: tk.Tk):
     root.after(100, gui_update, _gui, root)
 
 if __name__ == "__main__":
-    from Monitor.utils.geometry import Geometry
-    geo = Geometry()
-
     context = {}
     root = tk.Tk()
     gui_queue = queue.Queue()
 
-    context['position'] = geo.pos_right
     context['queues'] = gui_queue, None
     context['gui_root'] = root
     

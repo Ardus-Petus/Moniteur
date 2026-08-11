@@ -36,7 +36,7 @@ class gui:
         self.row_height = int(12 * scaling)   # 12 = hauteur "normale" de base
         #root.title("Extraction des opérations bancaires")
         root.title(__file__)
-        icon_path = os.path.join(os.path.dirname(__file__), 'moulinette.ico')
+        icon_path = os.path.join(os.path.dirname(__file__), '_gui_.ico')
         root.iconbitmap(icon_path) #type: ignore
         W = root.winfo_screenwidth()
         #H = root.winfo_screenheight()
