@@ -54,3 +54,4 @@ pytest_cache/
 *.key
 *.pem
 *.crt
+ftrace.txt

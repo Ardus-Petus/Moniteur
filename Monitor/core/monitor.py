@@ -77,8 +77,11 @@ class Monitor():
 
     def getGUI(self, payload, timeout=60):
         self.putGUI('input', payload)
-        _, payload = metier_queue.get(True,timeout=timeout)
-        return payload
+        try:
+            _, reponse = metier_queue.get(True,timeout=timeout)
+        except queue.Empty:
+            raise TimeoutError(f"Timeout sur saisie {payload}")
+        return reponse
 
 class Context(dict):
     def __init__(self):
