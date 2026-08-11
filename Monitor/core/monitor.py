@@ -1,5 +1,6 @@
 # main_LBP.py
 import threading
+import pythoncom
 import queue
 import tkinter as tk
 from typing import Any
@@ -50,6 +51,8 @@ class Monitor():
             self.pos_appli = presentation.position(pos_appli)
 
     def wrap_metier(self):
+        pythoncom.CoInitialize()
+        
         """Lance l'application métier dans un thread."""
         self.context['appli']['putgui'] = self.putGUI
         self.context['appli']['getgui'] = self.getGUI
