@@ -18,7 +18,8 @@ class Monitor():
         root = tk.Tk()
 
         # Préparation du GUI
-        gui, gui_update =  self.context['core']['gui']
+        gui =  self.context['core']['gui']
+        gui_update = gui.update
         # instanciation du gui
         self.context['gui']['gui_root'] = root
         self.context['gui']['queues'] = gui_queue, metier_queue
@@ -32,7 +33,7 @@ class Monitor():
         t.start()
 
         # Affichage du GUI dans le Thread principal
-        root.after(100, gui_update, mygui, root)
+        root.after(100, mygui.update)
         root.mainloop()
 
         nettoyage = self.context['appli'].get("nettoyage")
@@ -100,8 +101,8 @@ class Context(dict):
             raise TypeError("Application not callable")
         self.core['application'] = appli
 
-    def set_gui(self, gui, update):
-        self.core['gui']=(gui, update)
+    def set_gui(self, gui):
+        self.core['gui']=gui
 
     def set_presentation(self, pres, pos_gui, pos_appli):
         self.core['presentation']=(pres, pos_gui, pos_appli)

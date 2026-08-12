@@ -1,3 +1,4 @@
+import ctypes
 import os
 import tkinter as tk
 import tkinter.font as tkfont
@@ -121,42 +122,41 @@ class gui:
     def close(self) -> None:
         self.root.destroy()
 
-# ============================================================
-# GUI update loop
-# ============================================================
+    # ============================================================
+    # GUI update loop
+    # ============================================================
 
-import ctypes
-def gui_update(_gui: gui, root: tk.Tk):
-    if _gui.premier_appel:
-        setpos = _gui.context.get('position')
-        if setpos:
-            setpos(ctypes.windll.user32.GetParent(root.winfo_id()))
-        _gui.premier_appel = False
-  
-    def setEntry(field, value):
-        field.delete(0, 'end')
-        field.insert(0, value)
-    try:
-        while True:
-            msg_type, payload = _gui.gui_queue.get_nowait()
+    def update(self):
+        if self.premier_appel:
+            setpos = self.context.get('position')
+            if setpos:
+                setpos(ctypes.windll.user32.GetParent(root.winfo_id()))
+            self.premier_appel = False
+    
+        def setEntry(field, value):
+            field.delete(0, 'end')
+            field.insert(0, value)
+        try:
+            while True:
+                msg_type, payload = self.gui_queue.get_nowait()
 
-            if msg_type == 'title':
-                root.title(payload)
+                if msg_type == 'title':
+                    root.title(payload)
 
-            elif msg_type == "log":
-                _gui.log.insert("end", payload)
-                _gui.log.see("end")
+                elif msg_type == "log":
+                    self.log.insert("end", payload)
+                    self.log.see("end")
 
-            elif msg_type == "row":
-                _gui.tree.insert("", "end", values=payload) # payload est un tuple
-                _gui.tree.yview_moveto(1)  # On scroll vers le bas pour voir la dernière ligne ajoutée
-            
-            elif msg_type == 'Erreur':
-                setEntry(_gui.erreur, payload)
-                _gui.erreur.configure(background=PINK)
-    except queue.Empty:
-        pass
-    root.after(100, gui_update, _gui, root)
+                elif msg_type == "row":
+                    self.tree.insert("", "end", values=payload) # payload est un tuple
+                    self.tree.yview_moveto(1)  # On scroll vers le bas pour voir la dernière ligne ajoutée
+                
+                elif msg_type == 'Erreur':
+                    setEntry(self.erreur, payload)
+                    self.erreur.configure(background=PINK)
+        except queue.Empty:
+            pass
+        self.root.after(100, self.update)
 
 if __name__ == "__main__":
     context = {}
@@ -165,6 +165,6 @@ if __name__ == "__main__":
     context['queues'] = gui_queue, None
     context['gui_root'] = root
     mygui = gui(context)
-    root.after(100, gui_update, mygui, root)
+    root.after(100, mygui.update)
     root.mainloop()
     
