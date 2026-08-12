@@ -5,6 +5,9 @@ from collections import defaultdict
 import re
 from typing import Any
 import time
+import os
+
+PATH_OUT = os.environ['CESU_PATH']
 
 class ExtractionMetier:
 
@@ -106,11 +109,11 @@ class ExtractionMetier:
             # On a fini de balayer les div_prelevement
             # On recopie le dictionnaire result dans des fichiers csv
             #--------------------------------------------------------
-            with open('Cesu\\Résultats\\employés.csv', 'w', encoding='utf-8') as emp:
+            with open(f'{PATH_OUT}\\employés.csv', 'w', encoding='utf-8') as emp:
                 emp.write("Employé\n")
                 for employe in result:
                     emp.write(f'"{employe}"\n')
-                    with open(f"Cesu\\Résultats\\prelevements_{employe}.csv", 'w', encoding='utf-8') as f:
+                    with open(f"{PATH_OUT}\\prelevements_{employe}.csv", 'w', encoding='utf-8') as f:
                         f.write("Période;Montant;Déclaration\n")
                         infos = result[employe]
                         for periode, montant, declaration in infos:
@@ -154,7 +157,7 @@ class ExtractionMetier:
             # Exploitation du résultat et écriture des fichiers csv
             # -----------------------------------------------------    
             for employe in result:
-                with open(f"Cesu\\Résultats\\declarations_{employe}.csv", 'w', encoding='utf-8') as f:
+                with open(f'{PATH_OUT}\\declarations_{employe}.csv', 'w', encoding='utf-8') as f:
                     f.write("periode;nature_act;declaration;heures;salaire_horaire;complements;total_net_declare;total_net_paye\n")
                     infos = result[employe]
                     for periode, nature_act, declaration, heures, salaire_horaire,complements, total_net_declare, total_net_paye in infos:
