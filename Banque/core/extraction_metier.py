@@ -5,24 +5,25 @@ from typing import Type, Any, Callable
 from Banque.core.Excel import Excel
 from Banque.core.HTML import HTML
 from Banque.core.Ope import Ope
+from Monitor.core.AppMetier import AppMetier
+
 import importlib.resources as res
 
 class ManqueHistorique(Exception):
     pass
 
-class ExtractionMetier:
+class ExtractionMetier(AppMetier):
     def __init__(self, context):
+        super().__init__(context)
         self.tabexcl = res.read_text('LBP', 'exclusions.txt')
-        self.context = context
         self.oHTML:HTML|None = None
         self.oXL:Excel|None = None
         locale.setlocale(category=locale.LC_ALL, locale='')
 
     def run(self):
-        callback = self.context['putgui']
 
         def _cb(msgtype:str, value:Any):
-            callback(msgtype, value)
+            self.putgui(msgtype, value) # type: ignore
         def _tr(msg:str):
             _cb("log", msg+'\n')
         def _trace_ope(ope:Ope, inc_excl:str='incluse'):
@@ -129,4 +130,4 @@ class ExtractionMetier:
             )
         _tr("Fin normale du programme")
 
-        return True
+        return 

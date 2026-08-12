@@ -1,4 +1,5 @@
 # extraction_metier.py
+from Monitor.core.AppMetier import AppMetier
 from Monitor.core.chrome import webdriver, ChromeDriver, By 
 from Monitor.utils.Parser import Parser            
 from collections import defaultdict
@@ -9,18 +10,18 @@ import os
 
 PATH_OUT = os.environ['CESU_PATH']
 
-class ExtractionMetier:
+class ExtractionMetier(AppMetier):
 
     def __init__(self, context):
-        self.context = context
+        super().__init__(context)
         self.oHTML = None
 
     def run(self):
-        getgui = self.context['getgui']
-        putgui = self.context['putgui']
+        getgui = self.getgui        
+        putgui = self.putgui
      
         def _send(msgtype:str, value:Any):
-            putgui(msgtype, value)
+            putgui(msgtype, value) # pyright: ignore[reportOptionalCall]
         def _trace(msg:str):
             _send("log", msg+'\n')
 
@@ -62,7 +63,7 @@ class ExtractionMetier:
 
 
         _trace("Choisir un traitement")
-        dic = getgui('form', 999999)
+        dic = getgui('form', 999999) # pyright: ignore[reportOptionalCall]
         trt = dic['combo']
         _trace(f'traitement choisi: {trt}')
 
@@ -167,4 +168,4 @@ class ExtractionMetier:
         _trace("Fin normale du programme")
         _send("fnorm", None)
 
-        return True
+        return
