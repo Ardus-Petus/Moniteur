@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import queue
 from Monitor.gui.guiBase import guiBase, font_bold, PINK, GREY
-from Monitor.gui.widgets import MLFrame, Journal, Input, Champs, Tableau
+from Monitor.gui.widgets import MLFrame, Journal, Options, Champs, Tableau
 
 # ============================================================
 # GUI
@@ -16,7 +16,7 @@ class gui(guiBase):
         self.style.theme_use("clam")
  
         # champs
-        self.champs = {
+        champs_affichage = {
             "Date": 20,
             "N° compte": 20,
             "Excel": 20,
@@ -26,17 +26,17 @@ class gui(guiBase):
         }
         
         # Tableau
-        self.columns = [
+        tree_columns = [
             ('statut',  'Statut',   0.07, int(70*self.ratio),     False,  'w'),
             ('date',    'Date',     0.10, int(100*self.ratio),    False,  'w'),
             ('libelle', 'Libellé',  0.65, int(0),                 True,   'w'),
             ('montant', 'Montant',  0.12, int(150*self.ratio),    False,  'e'),
         ]
 
-        # Erreur
-        bloc_erreur = MLFrame(root, "Message d'erreur")
-        self.erreur = ttk.Entry(bloc_erreur)
-        self.erreur.pack(fill='x', expand=True, padx=2, pady=2)
+        # # Erreur
+        # bloc_erreur = MLFrame(root, "Message d'erreur")
+        # self.erreur = ttk.Entry(bloc_erreur)
+        # self.erreur.pack(fill='x', expand=True, padx=2, pady=2)
 
         # Boutons
         bloc_buttons = tk.Frame(root)
@@ -55,15 +55,25 @@ class gui(guiBase):
             command=self.close
         )
         self.btn_close.pack(side='left', padx=5, pady=5, anchor='center')
-        row_height = int(12 * root.tk.call('tk', 'scaling'))   # 12 = hauteur "normale" de base
-        # On place les différents blocs dans la fenêtre principale
-        Journal(root, self).pack(fill="x", padx=5, pady=5)
-        #Input(root, self).pack(fill="x", padx=5, pady=5)
-        Champs(root, self).pack(fill="x", padx=5, pady=5)
-        Tableau(root, self).pack(fill="both", expand=True, padx=5, pady=5)
-        bloc_erreur.pack(fill="x", padx=5, pady=5)  
-        bloc_buttons.pack(fill="x", padx=5, pady=5)
+        #-----------------------------------------------------------------------
+        # Création des autres blocs et mise en place dans la fenêtre principale
+        #-----------------------------------------------------------------------
+        bloc_journal, self.log = \
+            Journal(parent=root, text="Journal d'exécution")
+        # bloc_input, self.user_input_form, self.bouton_valid = \
+        #     Options(parent=root, text="Options", options=input_options, default=0, side='left')
+        bloc_tree, self.tree = \
+            Tableau(parent=root, text="Opérations détectées", columns=tree_columns, style=self.style, scaling=self.scaling)
+        bloc_champs, self.dict_champs = \
+            Champs(parent=root, text="Champs", champs=champs_affichage)
         
+        # On place les différents blocs dans la fenêtre principale
+        bloc_journal.pack(fill="x", padx=5, pady=5)
+        #bloc_input.pack(fill="x", padx=5, pady=5)
+        bloc_champs.pack(fill="x", padx=5, pady=5)
+        bloc_tree.pack(fill="both", expand=True, padx=5, pady=5)
+        #bloc_erreur.pack(fill="x", padx=5, pady=5)  
+        bloc_buttons.pack(fill="x", padx=5, pady=5)
 # On ne touche pas à la procédure update() de guiBase   
 # On gère les commandes reçues par update() via le dictionnaire dict_input
         self.dict_input['title'] = self.traiter_title
@@ -121,9 +131,9 @@ class gui(guiBase):
         self.root.title(payload)
 
     def traiter_erreur(self, msg_type, payload):
-        self.erreur.delete(0, 'end')
-        self.erreur.insert(0, payload)
-        self.erreur.configure(background=PINK)
+        self.erreur.delete(0, 'end')    # type: ignore
+        self.erreur.insert(0, payload)    # type: ignore
+        self.erreur.configure(background=PINK)    # type: ignore
 
     def traiter_row(self, msg_type, payload):
         self.tree.insert("", "end", values=payload) # payload est un tuple # type: ignore

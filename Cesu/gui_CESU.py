@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import queue
 from Monitor.gui.guiBase import guiBase, font_bold, PINK, GREY
-from Monitor.gui.widgets import MLFrame, Journal, Input, Champs, Tableau
+from Monitor.gui.widgets import MLFrame, Journal, Options, Champs, Tableau
 
 # ============================================================
 # GUI
@@ -16,7 +16,7 @@ class gui(guiBase):
         self.style.theme_use("clam")
  
         # champs
-        self.champs = {
+        champs = {
             "Date": 20,
             "N° compte": 20,
             "Excel": 20,
@@ -26,18 +26,25 @@ class gui(guiBase):
         }
         
         # Tableau
-        self.columns = [
+        tree_columns = [
             ('date',    'Date',     0.10, int(100*self.ratio),    False,  'w'),
             ('libelle', 'Libellé',  0.65, int(0),                 True,   'w'),
             ('montant', 'Montant',  0.15, int(150*self.ratio),    False,  'e'),
         ]
 
+        options_options = [
+            ('Prélèvements', "prelevements"),
+            ('Déclarations', "declarations"),
+        ]
+        #------------------------------------------------
         # Erreur
+        #------------------------------------------------
         bloc_erreur = MLFrame(root, "Message d'erreur")
         self.erreur = ttk.Entry(bloc_erreur)
         self.erreur.pack(fill='x', expand=True, padx=2, pady=2)
-
+        #------------------------------------------------
         # Boutons
+        #------------------------------------------------
         bloc_buttons = tk.Frame(root)
         
         frame_buttons = tk.Frame(bloc_buttons)
@@ -54,26 +61,41 @@ class gui(guiBase):
             command=self.close
         )
         self.btn_close.pack(side='left', padx=5, pady=5, anchor='center')
-        row_height = int(12 * root.tk.call('tk', 'scaling'))   # 12 = hauteur "normale" de base
+        #-----------------------------------------------------------------------
+        # Création des autres blocs et mise en place dans la fenêtre principale
+        #-----------------------------------------------------------------------
+        bloc_journal, self.log = \
+            Journal(parent=root, text="Journal d'exécution")
+        bloc_options, self.user_options_form, self.bouton_valid = \
+            Options(parent=root, text="Options", options=options_options, default=0, side='left', command=lambda:self.parse(None))
+        bloc_tree, self.tree = \
+            Tableau(parent=root, text="Opérations détectées", columns=tree_columns, style=self.style, scaling=self.scaling)
+        # bloc_champs, self.dict_champs = \
+        #     Champs(parent=root, text="Champs", champs=champs)
+        
         # On place les différents blocs dans la fenêtre principale
-        Journal(root, self).pack(fill="x", padx=5, pady=5)
-        Input(root, self).pack(fill="x", padx=5, pady=5)
-        Champs(root, self).pack(fill="x", padx=5, pady=5)
-        Tableau(root, self).pack(fill="both", expand=True, padx=5, pady=5)
+        bloc_journal.pack(fill="x", padx=5, pady=5)
+        bloc_options.pack(fill="x", padx=5, pady=5)
+        # bloc_champs.pack(fill="x", padx=5, pady=5)
+        bloc_tree.pack(fill="both", expand=True, padx=5, pady=5)
         bloc_erreur.pack(fill="x", padx=5, pady=5)  
         bloc_buttons.pack(fill="x", padx=5, pady=5)
         
 # On ne touche pas à la procédure update() de guiBase   
-# On gère les commandes reçues par update() via le dictionnaire dict_input
+# On gère les commandes reçues par update() via le dictionnaire dict_options
         self.dict_input['title'] = self.traiter_title
-        self.dict_input['input'] = self.traiter_input
+        self.dict_input['input'] = self.traiter_options
         self.dict_input['Erreur'] = self.traiter_erreur
         self.dict_input['row'] = self.traiter_row
         self.dict_input['log'] = self.traiter_log
 
         for nomchamp in self.dict_champs.keys():
             self.dict_input[nomchamp] = self.traiter_champ
-            
+
+# On initilise les champs particulier à une commande spécifique.
+# Ces champs sont gérés par la procédure traiter_champ()
+        self.bloc_label = bloc_tree
+        self.dict_input['label'] = self.traiter_label
 
 
 # Méthodes utilitaires
@@ -102,9 +124,9 @@ class gui(guiBase):
 #
 # Procedures de traitement des commandes reçues par update
 # ========================================================
-    def traiter_input(self, msg_type, payload):
+    def traiter_options(self, msg_type, payload):
         form = {
-            'form': self.user_input_form # pyright: ignore[reportAttributeAccessIssue]
+            'form': self.user_options_form
         }[payload]
         for _field in form.values():
             _field.configure(background='lightgrey')
@@ -135,6 +157,10 @@ class gui(guiBase):
             entry.insert(0, payload)
             if msg_type == "Erreur":
                 entry.configure(background=PINK)
+
+    def traiter_label(self, msg_type, payload):
+        self.bloc_label.label.configure(text=payload)
+        self.bloc_label.label.update_idletasks()  # Force la mise à jour immédiate de l'affichage        
 
 if __name__ == "__main__":
     context = {}

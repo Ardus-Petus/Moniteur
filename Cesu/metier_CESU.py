@@ -64,11 +64,13 @@ class ExtractionMetier(AppMetier):
 
         _trace("Choisir un traitement")
         dic = getgui('form', 999999) # pyright: ignore[reportOptionalCall]
-        trt = dic['combo']
+        trt = dic['buttons']
         _trace(f'traitement choisi: {trt}')
 
         _send('title', f'CESU - {trt}')
         # On est sur le tableau de bord.
+
+        _send('label', f'Extraction des {trt} en cours...')
        
         URLs = {'prelevements':"https://www.cesu.urssaf.fr/decla/index.html?page=page_empl_mes_prelevements&LANG=FR",
                 'declarations':"https://www.cesu.urssaf.fr/decla/index.html?page=page_empl_mes_declarations&LANG=FR"}
@@ -164,6 +166,7 @@ class ExtractionMetier(AppMetier):
                     for periode, nature_act, declaration, heures, salaire_horaire,complements, total_net_declare, total_net_paye in infos:
                         f.write(f"{periode};{nature_act };{declaration};{heures};{salaire_horaire};{complements};{total_net_declare};{total_net_paye}\n")
 
+        _send('label', f'Extraction des {trt} terminée')
 
         _trace("Fin normale du programme")
         _send("fnorm", None)

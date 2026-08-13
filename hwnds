@@ -1,7 +1,4 @@
-pid demandé: 27400
-hwnd:2099850, pid:22200, title:Accueil - www.cesu.urssaf.fr - Google Chrome
-hwnd:526012, pid:412, title:CESU.pyw - Moniteur - Visual Studio Code
-hwnd:525890, pid:24820, title:Copilot
-hwnd:262772, pid:4744, title:Mon Python pas à pas - tkinter.pack ( ) - Google Chrome
+pid demandé: 24348
+hwnd:395970, pid:16672, title:moulinette_LBP.pyw - Moniteur - Visual Studio Code
 hwnd:67590, pid:2472, title:WhatsApp
-hwnd:657490, pid:3488, title:Copilot Chat
+hwnd:1705668, pid:20764, title:Copilot Chat
