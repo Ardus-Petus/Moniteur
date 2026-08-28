@@ -10,7 +10,7 @@ import re
 
 class HTML_LBP(HTML):
     """Classe pour gérer les opérations bancaires dans un site WEB spécifique à La Banque Postale."""
-    DELAY = 180  # 3 minutes   
+    DELAY = 9999999999  # infini   
     CNXRELEVE = "releve_ccp.ea|releve_cne.ea"
     CNXCOMPTE = "afficheSyntheseCCP-synthese_ccp.ea"
     URL = 'https://www.labanquepostale.fr/particulier/connexion-espace-client.html'

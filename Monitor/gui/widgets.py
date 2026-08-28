@@ -18,14 +18,14 @@ def Journal(parent: tk.Widget|tk.Tk, text:str="Journal d'exécution"):
     log.pack(fill="x", padx=5, pady=5) # type: ignore
     return bloc_log, log
 
-def Options(
+def Input(
     parent: tk.Widget|tk.Tk, 
     text:str, 
     options:list[tuple[str, str]], 
     default: int, 
     side:Literal['top', 'left', 'right', 'bottom'],
-    command                     
-):    
+    command
+):
     bloc_options = MLFrame(parent, text=text)
     frame=tk.Frame(bloc_options.content)
     frame.pack(anchor='center')
@@ -93,7 +93,13 @@ def Tableau(parent: tk.Widget|tk.Tk, text="Opérations détectées", columns=[],
                 name, _, percent, min_width, _, _ = row
                 tree.column(name, width=max(int(width_total * percent), min_width))    
     tree.bind("<Configure>", resize_columns)   
-    return bloc_tree, tree    
+    return bloc_tree, tree   
+
+def MsgErr(parent: tk.Widget|tk.Tk, text:str="Erreur") -> tuple[MLFrame, tk.Entry]:
+    bloc_erreur = MLFrame(parent, text=text)
+    erreur = tk.Entry(bloc_erreur)
+    erreur.pack(fill='x', expand=True, padx=2, pady=2)
+    return bloc_erreur, erreur
 
 class RadioButtons(tk.Frame):
     def __init__(

@@ -6,6 +6,7 @@ from Banque.core.Excel import Excel
 from Banque.core.HTML import HTML
 from Banque.core.Ope import Ope
 from Monitor.core.AppMetier import AppMetier
+from datetime import datetime
 
 import importlib.resources as res
 
@@ -26,6 +27,7 @@ class ExtractionMetier(AppMetier):
             self.putgui(msgtype, value) # type: ignore
         def _tr(msg:str):
             _cb("log", msg+'\n')
+
         def _trace_ope(ope:Ope, inc_excl:str='incluse'):
             _cb(
                     "row",
@@ -42,6 +44,9 @@ class ExtractionMetier(AppMetier):
             if self.oXL:
                 self.oXL.mgr.maximize()
         self.context['nettoyage'] = nettoyage
+
+        # Affichage de la date
+        _cb("Date", datetime.now().strftime('%d/%m/%Y %H:%M:%Sd'))
 
         # Ouverture HTML
         self.oHTML = self.context['HTML']()
@@ -90,7 +95,7 @@ class ExtractionMetier(AppMetier):
         # Empiler les opérations HTML jusqu’à lastope ou EOF
         operations:list[Ope] = []
         while not (ope == lastope or ope.isEOF()):
-            _trace_ope(ope)
+            _trace_ope(ope, 'incluse')
             operations.append(ope)
             idxHTML += 1
             ope = self.oHTML.getHTMLOpe(idxHTML)

@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import queue
 from Monitor.gui.guiBase import guiBase, font_bold, PINK, GREY
-from Monitor.gui.widgets import MLFrame, Journal, Options, Champs, Tableau
+from Monitor.gui.widgets import MLFrame, Journal, Input, Champs, Tableau, MsgErr
 
 # ============================================================
 # GUI
@@ -27,8 +27,8 @@ class gui(guiBase):
         
         # Tableau
         tree_columns = [
-            ('date',    'Date',     0.10, int(100*self.ratio),    False,  'w'),
-            ('libelle', 'Libellé',  0.65, int(0),                 True,   'w'),
+            ('date',    'Date',     0.10, int(120*self.ratio),    False,  'e'),
+            ('libelle', 'Nom',      0.65, int(0),                 True,   'center'),
             ('montant', 'Montant',  0.15, int(150*self.ratio),    False,  'e'),
         ]
 
@@ -36,12 +36,6 @@ class gui(guiBase):
             ('Prélèvements', "prelevements"),
             ('Déclarations', "declarations"),
         ]
-        #------------------------------------------------
-        # Erreur
-        #------------------------------------------------
-        bloc_erreur = MLFrame(root, "Message d'erreur")
-        self.erreur = ttk.Entry(bloc_erreur)
-        self.erreur.pack(fill='x', expand=True, padx=2, pady=2)
         #------------------------------------------------
         # Boutons
         #------------------------------------------------
@@ -64,12 +58,15 @@ class gui(guiBase):
         #-----------------------------------------------------------------------
         # Création des autres blocs et mise en place dans la fenêtre principale
         #-----------------------------------------------------------------------
+
         bloc_journal, self.log = \
             Journal(parent=root, text="Journal d'exécution")
         bloc_options, self.user_options_form, self.bouton_valid = \
-            Options(parent=root, text="Options", options=options_options, default=0, side='left', command=lambda:self.parse(None))
+            Input(parent=root, text="Options", options=options_options, default=0, side=context['side'], command=lambda:self.parse(None))
         bloc_tree, self.tree = \
             Tableau(parent=root, text="Opérations détectées", columns=tree_columns, style=self.style, scaling=self.scaling)
+        bloc_erreur, self.erreur = \
+            MsgErr(parent=root, text="Message d'erreur")
         # bloc_champs, self.dict_champs = \
         #     Champs(parent=root, text="Champs", champs=champs)
         
@@ -84,7 +81,7 @@ class gui(guiBase):
 # On ne touche pas à la procédure update() de guiBase   
 # On gère les commandes reçues par update() via le dictionnaire dict_options
         self.dict_input['title'] = self.traiter_title
-        self.dict_input['input'] = self.traiter_options
+        self.dict_input['input'] = self.traiter_input
         self.dict_input['Erreur'] = self.traiter_erreur
         self.dict_input['row'] = self.traiter_row
         self.dict_input['log'] = self.traiter_log
@@ -124,7 +121,7 @@ class gui(guiBase):
 #
 # Procedures de traitement des commandes reçues par update
 # ========================================================
-    def traiter_options(self, msg_type, payload):
+    def traiter_input(self, msg_type, payload):
         form = {
             'form': self.user_options_form
         }[payload]

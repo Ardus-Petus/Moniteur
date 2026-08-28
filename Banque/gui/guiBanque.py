@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import queue
 from Monitor.gui.guiBase import guiBase, font_bold, PINK, GREY
-from Monitor.gui.widgets import MLFrame, Journal, Options, Champs, Tableau
+from Monitor.gui.widgets import MLFrame, Journal,  Champs, Tableau
 
 # ============================================================
 # GUI
@@ -72,9 +72,10 @@ class gui(guiBase):
         #bloc_input.pack(fill="x", padx=5, pady=5)
         bloc_champs.pack(fill="x", padx=5, pady=5)
         bloc_tree.pack(fill="both", expand=True, padx=5, pady=5)
-        #bloc_erreur.pack(fill="x", padx=5, pady=5)  
+        # bloc_erreur.pack(fill="x", padx=5, pady=5)  
         bloc_buttons.pack(fill="x", padx=5, pady=5)
-# On ne touche pas à la procédure update() de guiBase   
+# On ne touche pas à la procédure update() de guiBase  
+#  
 # On gère les commandes reçues par update() via le dictionnaire dict_input
         self.dict_input['title'] = self.traiter_title
         self.dict_input['input'] = self.traiter_input

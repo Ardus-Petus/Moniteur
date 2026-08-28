@@ -1,4 +1,6 @@
-# extraction_metier.py
+# metier_Cesu.py
+from abc import abstractmethod
+
 from Monitor.core.AppMetier import AppMetier
 from Monitor.core.chrome import webdriver, ChromeDriver, By 
 from Monitor.utils.Parser import Parser            
@@ -8,12 +10,15 @@ from typing import Any
 import time
 import os
 
-PATH_OUT = os.environ['CESU_PATH']
+# PATH_OUT = os.environ['CESU_PATH']
 
 class ExtractionMetier(AppMetier):
 
     def __init__(self, context):
         super().__init__(context)
+        self.Path_out = context['Path_out']
+        if not os.path.exists(self.Path_out):
+            raise ValueError(f"le répertoire {self.Path_out} n\'existe pas")
         self.oHTML = None
 
     def run(self):
@@ -46,24 +51,36 @@ class ExtractionMetier(AppMetier):
         _trace("Connexion au site...")
 
         # On ouvre le menu hamb
-        parser.getElementById('button', 'menuhamb').click()
+        but_hamb = parser.getElementById('button', 'menuhamb')
+        driver.execute_script("arguments[0].click();", but_hamb)   # .click direct ne fonctionne pas
         time.sleep(0.3)
-        but_cnx = parser.getElementById('a', 'page_se_connecter_link_i3')
-        if but_cnx:
-            # Si le bouton "Se connecter" est affiché (on ne peut pas le cliquer)
+        ul_menu = parser.getElement('//ul[@id="headerBandeauBasMenuListe"]')
+        # On regarde si l'élément de menu 'Tableau de bord' existe
+        but_tdb = parser.getElement('.//a[contains(., "Tableau de bord")]', ul_menu)
+        if  but_tdb is None:
+            # L'élément de menu 'Tableau de bord' n'existe pas.
+            # On exploite l'élément 'Se connecter'
+            but_cnx = parser.getElementById('a', 'page_se_connecter_link_i1')
             href = str(but_cnx.get_attribute('href'))
             driver.get(href)
             time.sleep(0.4)
             # On atteind la page de connexion.
             # Les champs user et password sont déjà remplis
-            parser.getElementById('button', 'btn-valider').click()
+            user = parser.getElementById('input', 'username')   
+            user.send_keys('\u0001francoisegoudal')  # Ctrl+A to select all text before typing
+
+            password = parser.getElementById('input', 'password')
+            password.send_keys('\u0001Grouch337282!')  # Ctrl+A to select all text before typing
+
+            but_valider = parser.getElementById('button', 'btn-valider')
+            driver.execute_script('arguments[0].click()', but_valider)
         else:
-            parser.getElement('//a[text()="Tableau de bord"]').click()
+            but_tdb.click()
         time.sleep(0.5)
 
-
+        assert driver.current_url == 'https://www.cesu.urssaf.fr/decla/index.html?page=page_empl_tableau_bord&LANG=FR'
         _trace("Choisir un traitement")
-        dic = getgui('form', 999999) # pyright: ignore[reportOptionalCall]
+        dic = getgui('input', 'form', 999999) # pyright: ignore[reportOptionalCall]
         trt = dic['buttons']
         _trace(f'traitement choisi: {trt}')
 
@@ -84,7 +101,7 @@ class ExtractionMetier(AppMetier):
             _trace("Page prélèvements")    
             result:defaultdict[str, list[tuple]] = defaultdict(list)
             parser.getElementById('button', 'periodeParDefaut').click()
-            time.sleep(0.1) # Petit temps d'attente pour le déploiement
+            time.sleep(0.5) # Petit temps d'attente pour le déploiement
             prélevements = parser.getElements('//div[@id="resultatsAffiches"]/div')
             for div_prelevement in prélevements[::-1]:
                 date_prelevement = parser.getElement('.//p[@name="date_prelevement"]', div_prelevement).text
@@ -112,11 +129,11 @@ class ExtractionMetier(AppMetier):
             # On a fini de balayer les div_prelevement
             # On recopie le dictionnaire result dans des fichiers csv
             #--------------------------------------------------------
-            with open(f'{PATH_OUT}\\employés.csv', 'w', encoding='utf-8') as emp:
+            with open(f'{self.Path_out}\\employés.csv', 'w', encoding='utf-8') as emp:
                 emp.write("Employé\n")
                 for employe in result:
                     emp.write(f'"{employe}"\n')
-                    with open(f"{PATH_OUT}\\prelevements_{employe}.csv", 'w', encoding='utf-8') as f:
+                    with open(f"{self.Path_out}\\prelevements_{employe}.csv", 'w', encoding='utf-8') as f:
                         f.write("Période;Montant;Déclaration\n")
                         infos = result[employe]
                         for periode, montant, declaration in infos:
@@ -129,10 +146,10 @@ class ExtractionMetier(AppMetier):
 
             _trace("Page déclarations")    
             result:defaultdict[str, list[tuple]] = defaultdict(list)
-            parser.getElementById('button', 'periodeSpecifique').click()
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight)");
-            time.sleep(2)
-            declarations = parser.getElements('//div[@id="resultatsAffiches"]/div') 
+            #parser.getElementById('button', 'periodeSpecifique').click()
+            #time.sleep(5) # Gros temps d'attente pour le déploiement
+            declarations = lazy_load(driver, '//div[@id="resultatsAffiches"]/div')                       
+            _trace(f"Nombre de déclarations: {len(declarations)}")
 
             for div_declaration in declarations[::-1]:
                 driver.execute_script("arguments[0].scrollIntoView(true)", div_declaration)
@@ -150,9 +167,9 @@ class ExtractionMetier(AppMetier):
                 salaire_horaire = getvar('salaire_horaire')
                 complements = getvar('complements_salaire')
                 total_net_declare = getvar('total_net_delcare')
-                total_net_paye = getvar('total_net_paye_PAS')
+                total_net_paye = getvar('total_net_paye_PAS') + ' €' # type: ignore
                 _send('row',(periode, employe, total_net_paye))
-                result[employe].append(
+                result[employe].append(                                 # type: ignore
                     (periode, nature_act, declaration, heures, salaire_horaire,complements, total_net_declare, total_net_paye)
                 )
                 driver.execute_script("arguments[0].classList.remove('show');", div_data)
@@ -160,7 +177,7 @@ class ExtractionMetier(AppMetier):
             # Exploitation du résultat et écriture des fichiers csv
             # -----------------------------------------------------    
             for employe in result:
-                with open(f'{PATH_OUT}\\declarations_{employe}.csv', 'w', encoding='utf-8') as f:
+                with open(f'{self.Path_out}\\declarations_{employe}.csv', 'w', encoding='utf-8') as f:
                     f.write("periode;nature_act;declaration;heures;salaire_horaire;complements;total_net_declare;total_net_paye\n")
                     infos = result[employe]
                     for periode, nature_act, declaration, heures, salaire_horaire,complements, total_net_declare, total_net_paye in infos:
@@ -172,3 +189,26 @@ class ExtractionMetier(AppMetier):
         _send("fnorm", None)
 
         return
+
+def lazy_load(driver:webdriver.Chrome, ref:str):
+    # On scroll jusqu'en bas de la page pour forcer le chargement de tous les éléments
+    # On répète l'opération tant que le nombre d'éléments chargés augmente
+    # On suppose que le site charge les éléments par paquets, et qu'il n'y a pas de bouton "Charger plus"
+    # On peut aussi utiliser ActionChains pour simuler un scroll plus naturel
+    from selenium.webdriver.common.action_chains import ActionChains
+
+    actions = ActionChains(driver)
+
+    previous_count = 0
+
+    while True:
+        # scroll comme un humain
+        actions.scroll_by_amount(0, 4000).perform()
+        time.sleep(1)
+        # compter les éléments chargés
+        items = driver.find_elements(By.XPATH, ref)
+        count = len(items)
+        if count == previous_count:
+            break  # plus rien ne se charge
+        previous_count = count
+    return items
