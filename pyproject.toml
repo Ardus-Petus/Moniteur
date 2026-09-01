@@ -1,6 +1,6 @@
 [project]
 name = "ProjetMonitor"
-version = "1.0.7"
+version = "1.0.9"
 dependencies = []
 
 [tool.setuptools.packages.find]
