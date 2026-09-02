@@ -51,14 +51,17 @@ class Excel(ABC):
                 self.WorkBook = self.Appli.Workbooks.Add(modelpath)  # Crée un nouveau classeur à partir du modèle
                 self.status = Excel.NEW
 
+        # self.WorkBook.windows(1).WindowState = -4140  # xlMinimized
+
         # On active le classeur et on récupère le handle de la fenêtre Excel
         assert self.WorkBook is not None
-        self.WorkBook.Activate()
+        #self.WorkBook.Activate()
         # self.hwnd = find_hwnd_by_workbook_name(WorkBookname)  
 
         # On récupère le hwnd à partir de la collection Windows du classeur
         # (on considère qu'il n'y a qu'une fenêtre)
         self.hwnd = self.mgr.hwnd = self.WorkBook.Windows[0].Hwnd
+
 
         # On récupère la feuille de calcul "Banque" du classeur
         self.WorkSheet = self.WorkBook.Worksheets(worksheetname)
@@ -78,8 +81,11 @@ class Excel(ABC):
                 self.tablib = json.loads(file.read())
         except FileNotFoundError:
             self.tablib: list[list[str]]= []
+
+        
         # Finalement, on retourne l'objet Excel initialisé
-    
+        self.Appli.WindowState = -4137  # xlNormal
+
     #---------------------------------------------------------
     # Méthodes pour gérer les opérations dans le fichier Excel
     #---------------------------------------------------------

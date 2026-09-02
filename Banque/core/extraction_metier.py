@@ -6,6 +6,7 @@ from Banque.core.Excel import Excel
 from Banque.core.HTML import HTML
 from Banque.core.Ope import Ope
 from Monitor.core.AppMetier import AppMetier
+from datetime import datetime
 
 import importlib.resources as res
 
@@ -43,6 +44,9 @@ class ExtractionMetier(AppMetier):
                 self.oXL.mgr.maximize()
         self.context['nettoyage'] = nettoyage
 
+        _tr('Début du programme d\'extraction')
+        _cb('Date', datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+
         # Ouverture HTML
         self.oHTML = self.context['HTML']()
 
@@ -62,6 +66,7 @@ class ExtractionMetier(AppMetier):
         # Ouverture Excel
         _tr("Ouverture classeur Excel")
         self.oXL = self.context['Excel'](acctNo)
+        _tr("Classeur Excel ouvert")
         _cb("XL_opened", self.oXL.hwnd)   # pour que la présentation positionne la fenêtre Excel
         _cb("Excel", self.oXL.getStatusString())
 
