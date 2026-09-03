@@ -1,5 +1,6 @@
 import json
 import win32com.client as win32  # installé par pip install pywin32
+from Monitor.utils import winmgt
 import os.path
 from Monitor.utils.ExcelWindowManager import ExcelWindowManager
 from Banque.core.Ope import Ope
@@ -33,7 +34,8 @@ class Excel(ABC):
         self.Appli = self.mgr.appli           # On récupère l'instance Excel 
                 
         self.Appli.Visible = True
-        self.Appli.WindowState = -4140      # xlMinimized
+        winmgt.focus(self.mgr.get_hwnd())       # Essentiel: SetForegroundWindow effectué par focus
+        #self.Appli.WindowState = -4140      # xlMinimized
 
         # On récupère la liste des classeurs ouverts 
         # et on vérifie si le classeur pour le compte existe déjà
@@ -41,11 +43,12 @@ class Excel(ABC):
         openWorkBooks= [w.Name for w in WorkBooks]
         if WorkBookname in openWorkBooks:
                                                     # Récupère le classeur déjà ouvert
-            self.WorkBook = WorkBooks[openWorkBooks.index(WorkBookname)]
+            self.WorkBook = WorkBooks[WorkBookname]
             self.status = Excel.EXIST
         else:
             if os.path.exists(self.nomfic):
-                self.WorkBook = self.Appli.Workbooks.Open(self.nomfic)    #Ouvre le classeur existant
+                self.WorkBook = self.Appli.Workbooks.Open(self.nomfic) 
+                #focus(self.WorkBook.Windows[0].Hwnd)   #Ouvre le classeur existant
                 self.status = Excel.OPEN
             else:
                 self.WorkBook = self.Appli.Workbooks.Add(modelpath)  # Crée un nouveau classeur à partir du modèle
@@ -84,7 +87,7 @@ class Excel(ABC):
 
         
         # Finalement, on retourne l'objet Excel initialisé
-        self.Appli.WindowState = -4137  # xlNormal
+        self.Appli.WindowState = -4143  # xlNormal
 
     #---------------------------------------------------------
     # Méthodes pour gérer les opérations dans le fichier Excel

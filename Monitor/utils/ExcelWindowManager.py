@@ -19,6 +19,8 @@ class ExcelWindowManager:
             app: win32.CDispatch = win32.Dispatch("Excel.Application") #type: ignore
             return app, False  # ✔️ Excel vient d'être créé             
 
+    def get_hwnd(self) -> int | None:
+        return win32gui.FindWindow(None, self.appli.Caption)
     # ---------------------------------------------------------     
     # Maximiser la fenêtre
     # ---------------------------------------------------------     
