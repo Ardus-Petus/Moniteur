@@ -4,6 +4,7 @@ import tkinter.font as tkfont
 from tkinter import ttk
 import queue
 import ctypes
+from typing import Callable, Any
 
 PINK = "#FFAED0"
 GREY = "#B5B5B5"
@@ -13,7 +14,7 @@ GREY = "#B5B5B5"
 # ============================================================
 
 class guiBase:
-    def __init__(self, context):
+    def __init__(self, context) -> None:
         self.context = context
         root=context['gui_root']
         self.root = root
@@ -27,8 +28,6 @@ class guiBase:
         H = root.winfo_screenheight()
         self.ratio = W/1920
         self.style = ttk.Style()
-        self.dict_input = {}
-        self.dict_champs = {}
         self.erreur = None
         self.scaling = float(root.tk.call('tk', 'scaling'))
 
@@ -38,7 +37,7 @@ class guiBase:
     # ============================================================
     # GUI update loop
     # ============================================================
-    def update(self):
+    def update(self)->None:
 
         if self.premier_appel:
             setpos = self.context.get('position')
@@ -51,15 +50,30 @@ class guiBase:
         try:
             while True:
                 msg_type, payload = self.gui_queue.get_nowait()
-                proc = self.dict_input.get(msg_type)
-                if proc:
+                if msg_type[0] == '!':
+                    self.traiter_champ(msg_type[1:], payload)
+                else:
+                    proc = getattr(self, f'traiter_{msg_type}')
                     proc(msg_type, payload)
 
         except queue.Empty:
             pass
+
         self.root.after(100, self.update)
 
-def simulate_manual_resize(root):
+    def traiter_champ(self, msg_type, payload):
+        entry = getattr(self,f'Entry_{msg_type.replace(' ', '_')}')
+        entry.delete(0, 'end')
+        entry.insert(0, payload)
+        if msg_type == "Erreur":
+            entry.configure(background=PINK)
+
+
+
+#-----------------------
+# Procedures utilitaires
+#-----------------------
+def simulate_manual_resize(root)->None:
     w = root.winfo_width()
     h = root.winfo_height()
 
@@ -67,8 +81,7 @@ def simulate_manual_resize(root):
         root.geometry(f"{w+delta}x{h}")
         root.update_idletasks()
 
-
-def font_bold():
+def font_bold() ->tkfont.Font:
     font = tkfont.nametofont("TkDefaultFont").copy()
     font.configure(weight="bold")
     return font

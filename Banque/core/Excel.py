@@ -54,7 +54,7 @@ class Excel(ABC):
                 self.WorkBook = self.Appli.Workbooks.Add(modelpath)  # Crée un nouveau classeur à partir du modèle
                 self.status = Excel.NEW
 
-        # self.WorkBook.windows(1).WindowState = -4140  # xlMinimized
+        self.WorkBook.windows(1).WindowState = -4140  # xlMinimized
 
         # On active le classeur et on récupère le handle de la fenêtre Excel
         assert self.WorkBook is not None

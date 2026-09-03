@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import queue
 from Monitor.gui.guiBase import guiBase, font_bold, PINK, GREY
-from Monitor.gui.widgets import MLFrame, Journal, Options, Champs, Tableau
+from Monitor.gui.widgets import MLFrame, Journal, Tableau, Input
 
 # ============================================================
 # GUI
@@ -67,37 +67,20 @@ class gui(guiBase):
         bloc_journal, self.log = \
             Journal(parent=root, text="Journal d'exécution")
         bloc_options, self.user_options_form, self.bouton_valid = \
-            Options(parent=root, text="Options", options=options_options, default=0, side='left', command=lambda:self.parse(None))
+            Input(parent=root, text="Options", options=options_options, default=0, side='left', command=lambda:self.parse(None))
         bloc_tree, self.tree = \
-            Tableau(parent=root, text="Opérations détectées", columns=tree_columns, style=self.style, scaling=self.scaling)
+            Tableau(parent=root, text="Opérations détectées", columns=tree_columns)
         # bloc_champs, self.dict_champs = \
         #     Champs(parent=root, text="Champs", champs=champs)
         
         # On place les différents blocs dans la fenêtre principale
         bloc_journal.pack(fill="x", padx=5, pady=5)
-        bloc_options.pack(fill="x", padx=5, pady=5)
-        # bloc_champs.pack(fill="x", padx=5, pady=5)
+        bloc_options.pack(fill="x", padx=5, pady=5)        # bloc_champs.pack(fill="x", padx=5, pady=5)
         bloc_tree.pack(fill="both", expand=True, padx=5, pady=5)
         bloc_erreur.pack(fill="x", padx=5, pady=5)  
         bloc_buttons.pack(fill="x", padx=5, pady=5)
-        
-# On ne touche pas à la procédure update() de guiBase   
-# On gère les commandes reçues par update() via le dictionnaire dict_options
-        self.dict_input['title'] = self.traiter_title
-        self.dict_input['input'] = self.traiter_options
-        self.dict_input['Erreur'] = self.traiter_erreur
-        self.dict_input['row'] = self.traiter_row
-        self.dict_input['log'] = self.traiter_log
 
-        for nomchamp in self.dict_champs.keys():
-            self.dict_input[nomchamp] = self.traiter_champ
-
-# On initilise les champs particulier à une commande spécifique.
-# Ces champs sont gérés par la procédure traiter_champ()
-        self.bloc_label = bloc_tree
-        self.dict_input['label'] = self.traiter_label
-
-
+#---------------------
 # Méthodes utilitaires
 # --------------------
 #         
@@ -124,7 +107,7 @@ class gui(guiBase):
 #
 # Procedures de traitement des commandes reçues par update
 # ========================================================
-    def traiter_options(self, msg_type, payload):
+    def traiter_input(self, msg_type, payload):
         form = {
             'form': self.user_options_form
         }[payload]
@@ -141,7 +124,7 @@ class gui(guiBase):
     def traiter_title(self, msg_type, payload):
         self.root.title(payload)
 
-    def traiter_erreur(self, msg_type, payload):
+    def traiter_Erreur(self, msg_type, payload):
         self.erreur.delete(0, 'end')
         self.erreur.insert(0, payload)
         self.erreur.configure(background=PINK)
@@ -150,13 +133,13 @@ class gui(guiBase):
         self.tree.insert("", "end", values=payload) # payload est un tuple
         self.tree.yview_moveto(1)  # On scroll vers le bas pour voir la dernière ligne ajoutée
 
-    def traiter_champ(self, msg_type, payload):
-        entry = self.dict_champs.get(msg_type)
-        if entry is not None:
-            entry.delete(0, 'end')
-            entry.insert(0, payload)
-            if msg_type == "Erreur":
-                entry.configure(background=PINK)
+    # def traiter_champ(self, msg_type, payload):
+    #     entry = self.dict_champs.get(msg_type)
+    #     if entry is not None:
+    #         entry.delete(0, 'end')
+    #         entry.insert(0, payload)
+    #         if msg_type == "Erreur":
+    #             entry.configure(background=PINK)
 
     def traiter_label(self, msg_type, payload):
         self.bloc_label.label.configure(text=payload)

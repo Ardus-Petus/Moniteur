@@ -45,7 +45,7 @@ class ExtractionMetier(AppMetier):
         self.context['nettoyage'] = nettoyage
 
         _tr('Début du programme d\'extraction')
-        _cb('Date', datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+        _cb('!Date', datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
 
         # Ouverture HTML
         self.oHTML = self.context['HTML']()
@@ -61,14 +61,14 @@ class ExtractionMetier(AppMetier):
         self.oHTML.waitForRelevé()
 
         acctNo = self.oHTML.getAcctNo()
-        _cb("N° compte", acctNo)
+        _cb("!N° compte", acctNo)
 
         # Ouverture Excel
         _tr("Ouverture classeur Excel")
         self.oXL = self.context['Excel'](acctNo)
         _tr("Classeur Excel ouvert")
         _cb("XL_opened", self.oXL.hwnd)   # pour que la présentation positionne la fenêtre Excel
-        _cb("Excel", self.oXL.getStatusString())
+        _cb("!Excel", self.oXL.getStatusString())
 
         # Recherche dernière opération Excel
         lastrow = self.oXL.getLastRow()
@@ -76,8 +76,8 @@ class ExtractionMetier(AppMetier):
             lastope = self.oXL.getXLOpe(lastrow)
         except:
             raise ValueError("La dernière ligne du tableau Excel n\'est pas une écriture")
-        _tr(f"Dern. opé: {lastope}")
-        _cb("Dern. ", lastope)
+        _tr(f"Dern.opé: {lastope}")
+        _cb("!Dernière", lastope)
 
         idxHTML = 0
         tot_excl = Decimal(0)
@@ -101,7 +101,7 @@ class ExtractionMetier(AppMetier):
             ope = self.oHTML.getHTMLOpe(idxHTML)
 
         nb_ope = len(operations)
-        _cb("Nb ope", nb_ope)
+        _cb("!Nb ope", nb_ope)
 
         soldeHTML = Decimal(self.oHTML.getSolde())
         self.oHTML.quit()
@@ -128,11 +128,10 @@ class ExtractionMetier(AppMetier):
 
         # On ne sauvgarde pas les éventuelles modifications aux fichiers existants
 
-        _cb(
-                "log",
-                f"Solde: {locale.currency(soldeHTML, grouping=True, symbol=True)}\n"
-                f"Résultat: {nb_ope} opération(s) ajoutée(s)\n"
-            )
+        _tr(
+            f"Solde: {locale.currency(soldeHTML, grouping=True, symbol=True)}\n"
+            f"Résultat: {nb_ope} opération(s) ajoutée(s)\n"
+        )
         _tr("Fin normale du programme")
 
         return 

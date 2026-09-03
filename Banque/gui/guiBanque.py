@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 import queue
-from Monitor.gui.guiBase import guiBase, font_bold, PINK, GREY
-from Monitor.gui.widgets import MLFrame, Journal, Options, Champs, Tableau
+from Monitor.gui.guiBase import guiBase, GREY, PINK, font_bold
+from Monitor.gui.widgets import Journal, Champs, Tableau
 
 # ============================================================
 # GUI
@@ -21,7 +21,7 @@ class gui(guiBase):
             "N° compte": 20,
             "Excel": 20,
             "Nb ope": 10,
-            "Dern. ": 98,
+            "Dernière": 98,
             "Erreur" :98
         }
         
@@ -63,9 +63,9 @@ class gui(guiBase):
         # bloc_input, self.user_input_form, self.bouton_valid = \
         #     Options(parent=root, text="Options", options=input_options, default=0, side='left')
         bloc_tree, self.tree = \
-            Tableau(parent=root, text="Opérations détectées", columns=tree_columns, style=self.style, scaling=self.scaling)
-        bloc_champs, self.dict_champs = \
-            Champs(parent=root, text="Champs", champs=champs_affichage)
+            Tableau(parent=root, text="Opérations détectées", columns=tree_columns)
+        bloc_champs = \
+            Champs(base=self, parent=root, text="Champs", champs=champs_affichage)
         
         # On place les différents blocs dans la fenêtre principale
         bloc_journal.pack(fill="x", padx=5, pady=5)
@@ -74,19 +74,9 @@ class gui(guiBase):
         bloc_tree.pack(fill="both", expand=True, padx=5, pady=5)
         #bloc_erreur.pack(fill="x", padx=5, pady=5)  
         bloc_buttons.pack(fill="x", padx=5, pady=5)
-# On ne touche pas à la procédure update() de guiBase   
-# On gère les commandes reçues par update() via le dictionnaire dict_input
-        self.dict_input['title'] = self.traiter_title
-        self.dict_input['input'] = self.traiter_input
-        self.dict_input['Erreur'] = self.traiter_erreur
-        self.dict_input['row'] = self.traiter_row
-        self.dict_input['log'] = self.traiter_log
-
-        for nomchamp in self.dict_champs.keys():
-            self.dict_input[nomchamp] = self.traiter_champ
             
 
-
+#---------------------
 # Méthodes utilitaires
 # --------------------
 #         
@@ -113,15 +103,15 @@ class gui(guiBase):
 #
 # Procedures de traitement des commandes reçues par update
 # ========================================================
-    def traiter_input(self, msg_type, payload):
-        form = {
-            'form': self.user_input_form # pyright: ignore[reportAttributeAccessIssue]
-        }[payload]
-        for _field in form.values():
-            _field.configure(background='lightgrey')
-        self.bouton_valid.config(state=tk.NORMAL)# type: ignore
-        self.changer_background('lightgrey')
-        self.responseform = form 
+    # def traiter_input(self, msg_type, payload):
+    #     form = {
+    #         'form': self.user_input_form # pyright: ignore[reportAttributeAccessIssue]
+    #     }[payload]
+    #     for _field in form.values():
+    #         _field.configure(background='lightgrey')
+    #     self.bouton_valid.config(state=tk.NORMAL)# type: ignore
+    #     self.changer_background('lightgrey')
+    #     self.responseform = form 
 
     def traiter_log(self, msg_type, payload):
         self.log.insert("end", payload)# type: ignore
@@ -130,22 +120,14 @@ class gui(guiBase):
     def traiter_title(self, msg_type, payload):
         self.root.title(payload)
 
-    def traiter_erreur(self, msg_type, payload):
-        self.erreur.delete(0, 'end')    # type: ignore
-        self.erreur.insert(0, payload)    # type: ignore
-        self.erreur.configure(background=PINK)    # type: ignore
+    # def traiter_erreur(self, msg_type, payload):
+    #     self.erreur.delete(0, 'end')    # type: ignore
+    #     self.erreur.insert(0, payload)    # type: ignore
+    #     self.erreur.configure(background=PINK)    # type: ignore
 
     def traiter_row(self, msg_type, payload):
         self.tree.insert("", "end", values=payload) # payload est un tuple # type: ignore
         self.tree.yview_moveto(1)  # On scroll vers le bas pour voir la dernière ligne ajoutée # type: ignore
-
-    def traiter_champ(self, msg_type, payload):
-        entry = self.dict_champs.get(msg_type)
-        if entry is not None:
-            entry.delete(0, 'end')
-            entry.insert(0, payload)
-            if msg_type == "Erreur":
-                entry.configure(background=PINK)
 
 if __name__ == "__main__":
     context = {}

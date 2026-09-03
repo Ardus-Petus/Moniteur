@@ -8,7 +8,9 @@ from typing import Any
 import time
 import os
 
-PATH_OUT = os.environ['CESU_PATH']
+PATH_OUT = os.path.join(os.curdir, "CESU", "Résultats") 
+if not os.path.exists(PATH_OUT):
+    raise ValueError(f'{PATH_OUT} n\'existe pas')            
 
 class ExtractionMetier(AppMetier):
 
@@ -169,6 +171,6 @@ class ExtractionMetier(AppMetier):
         _send('label', f'Extraction des {trt} terminée')
 
         _trace("Fin normale du programme")
-        _send("fnorm", None)
+       
 
         return

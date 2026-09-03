@@ -18,14 +18,14 @@ def Journal(parent: tk.Widget|tk.Tk, text:str="Journal d'exécution"):
     log.pack(fill="x", padx=5, pady=5) # type: ignore
     return bloc_log, log
 
-def Options(
+def Input(
     parent: tk.Widget|tk.Tk, 
     text:str, 
     options:list[tuple[str, str]], 
     default: int, 
     side:Literal['top', 'left', 'right', 'bottom'],
-    command                     
-):    
+    command
+):
     bloc_options = MLFrame(parent, text=text)
     frame=tk.Frame(bloc_options.content)
     frame.pack(anchor='center')
@@ -41,7 +41,7 @@ def Options(
         }
     return bloc_options, user_options_form, bouton_valid
 
-def Champs(parent: tk.Widget|tk.Tk, text:str, champs:dict):    # Champs
+def Champs(base:object, parent: tk.Widget|tk.Tk, text:str, champs:dict):    # Champs
     bloc_champs  = MLFrame(parent, text=text)
         
     frame_val = tk.Frame(bloc_champs.content)
@@ -49,7 +49,6 @@ def Champs(parent: tk.Widget|tk.Tk, text:str, champs:dict):    # Champs
 
     nbcol = len(champs.keys())-2  # type: ignore
     r=0
-    dict_champs:dict[str, tk.Entry] = {}        # dictionnaire des champs réutilisé dans gui_update
     for i, champ in enumerate(champs.keys()):          
         frame = tk.Frame(frame_val)
 
@@ -60,40 +59,45 @@ def Champs(parent: tk.Widget|tk.Tk, text:str, champs:dict):    # Champs
         field.pack(expand=True, side='left', fill='x', anchor='w', padx=5, pady=2)
         field.configure(justify='center')
 
-        dict_champs[champ] = field       # type: ignore  # initialisation du dictionnaire dict_champs
+        setattr(base, f'Entry_{champ.replace(' ', '_')}', field)
+        
         if i < nbcol:
             frame.grid(row=r, column=i, padx=5, pady=5)
         else:
             r += 1
             frame.grid(row=r, column=0, columnspan=nbcol, padx=5, pady=5, sticky='w')
 
-    return bloc_champs, dict_champs
+    return bloc_champs
 
-def Tableau(parent: tk.Widget|tk.Tk, text="Opérations détectées", columns=[], style: ttk.Style=None, scaling: float = 1.0):    # type: ignore # Tableau
-    row_height = int(12 * scaling)   # type: ignore
-    style.configure("MonStyle.Treeview", rowheight=row_height)
+def Tableau(parent: tk.Widget|tk.Tk, text="Opérations détectées", columns=[], show='headings'):    # type: ignore # Tableau
     bloc_tree = MLFrame(parent, text=text)
-
+    cols = columns
+    trt_columns = False
+    if columns:
+        if isinstance(columns[0], tuple):
+            cols = [lig[0] for lig in columns]
+            trt_columns = True
+        
     tree = ttk.Treeview(           # type: ignore
         bloc_tree.content,
         height=5,
-        columns=[name for name, *_ in columns],  # type: ignore
-        show="headings",
-        style="MonStyle.Treeview",
-    )
+        columns=cols,
+        show=show, # type: ignore
+    )                                   
+    if trt_columns:
+        for name, text, _, min_width, stretch, anchor in columns:  
+            tree.heading(name, text=text)  
+            tree.column(name, width=min_width, stretch=stretch, anchor=anchor) # type: ignore
 
-    for name, text, _, min_width, stretch, anchor in columns   :  
-        tree.heading(name, text=text)  
-        tree.column(name, width=min_width, stretch=stretch, anchor=anchor) 
 
     tree.pack(fill="both", expand=True, anchor='n', padx=5, pady=5)   
-    def resize_columns(event: tk.Event) -> None:
-            width_total = tree.winfo_width() -20 
-            for row in columns:        # type: ignore
-                name, _, percent, min_width, _, _ = row
-                tree.column(name, width=max(int(width_total * percent), min_width))    
-    tree.bind("<Configure>", resize_columns)   
-    return bloc_tree, tree    
+    return bloc_tree, tree   
+
+def MsgErr(parent: tk.Widget|tk.Tk, text:str="Erreur") -> tuple[MLFrame, tk.Entry]:
+    bloc_erreur = MLFrame(parent, text=text)
+    erreur = tk.Entry(bloc_erreur)
+    erreur.pack(fill='x', expand=True, padx=2, pady=2)
+    return bloc_erreur, erreur
 
 class RadioButtons(tk.Frame):
     def __init__(
