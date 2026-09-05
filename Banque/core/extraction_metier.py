@@ -68,8 +68,8 @@ class ExtractionMetier(AppMetier):
         self.oXL = self.context['Excel'](acctNo)
         _tr("Classeur Excel ouvert")
         _cb("XL_opened", self.oXL.hwnd)   # pour que la présentation positionne la fenêtre Excel
+        self.oXL.setVisible(True)
         _cb("!Excel", self.oXL.getStatusString())
-
         # Recherche dernière opération Excel
         lastrow = self.oXL.getLastRow()
         try:

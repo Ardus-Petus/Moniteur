@@ -5,6 +5,8 @@ import queue
 import tkinter as tk
 from typing import Any
 import traceback
+import ctypes
+
 # Queues
 gui_queue : queue.Queue[tuple[str, Any]]= queue.Queue()
 metier_queue : queue.Queue[tuple[str, Any]]= queue.Queue()
@@ -14,7 +16,8 @@ class Monitor():
         self.context = context
 
     def run(self):
-        # Création de la fenêtre Tkinter
+        # Création de la fenêtre Tkinter avec lancement du thread Application métier
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)  # 2 = Per Monitor DPI Aware
         root = tk.Tk()
 
         # Préparation du GUI
@@ -26,7 +29,7 @@ class Monitor():
       
         mygui = gui(self.context['gui'])
         
-        # Lancement de l'application dans un thread
+        # Lancement de l'application métier dans un thread
         self.context['appli']['queues'] = gui_queue, metier_queue
         self.test_presentation()
         t = threading.Thread(target=self.wrap_metier, daemon=True)

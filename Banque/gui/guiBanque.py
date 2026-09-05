@@ -120,6 +120,9 @@ class gui(guiBase):
     def traiter_title(self, msg_type, payload):
         self.root.title(payload)
 
+    def traiter_Erreur(self, msg_type, payload):
+        self.traiter_champ('Erreur', payload)
+
     # def traiter_erreur(self, msg_type, payload):
     #     self.erreur.delete(0, 'end')    # type: ignore
     #     self.erreur.insert(0, payload)    # type: ignore

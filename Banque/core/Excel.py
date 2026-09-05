@@ -31,10 +31,12 @@ class Excel(ABC):
         self.nomfic = rep + WorkBookname          # Chemin complet du fichier Excel pour le compte
  
         self.mgr = ExcelWindowManager()     # Active ou crée une instance d'Excel
+        winmgt.focus(self.mgr.get_hwnd())       # Essentiel: SetForegroundWindow effectué par focus
+
         self.Appli = self.mgr.appli           # On récupère l'instance Excel 
                 
-        self.Appli.Visible = True
-        winmgt.focus(self.mgr.get_hwnd())       # Essentiel: SetForegroundWindow effectué par focus
+        self.Appli.Visible = False
+        self.Appli.FeatureInstall = 0  # Empêche Excel de chercher des fonctionnalités manquantes sur le réseau     
         #self.Appli.WindowState = -4140      # xlMinimized
 
         # On récupère la liste des classeurs ouverts 
@@ -54,7 +56,7 @@ class Excel(ABC):
                 self.WorkBook = self.Appli.Workbooks.Add(modelpath)  # Crée un nouveau classeur à partir du modèle
                 self.status = Excel.NEW
 
-        self.WorkBook.windows(1).WindowState = -4140  # xlMinimized
+        # self.WorkBook.windows(1).WindowState = -4140  # xlMinimized
 
         # On active le classeur et on récupère le handle de la fenêtre Excel
         assert self.WorkBook is not None
@@ -87,7 +89,13 @@ class Excel(ABC):
 
         
         # Finalement, on retourne l'objet Excel initialisé
+        self.Appli.Visible = True
+        # self.Appli.DisplayAlerts = True
         self.Appli.WindowState = -4143  # xlNormal
+
+
+    def setVisible(self, state:bool):
+        self.Appli.Visible = state
 
     #---------------------------------------------------------
     # Méthodes pour gérer les opérations dans le fichier Excel

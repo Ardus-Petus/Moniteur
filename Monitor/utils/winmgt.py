@@ -49,11 +49,11 @@ def getChromeWindowFromPid(pid: int) -> int:
 
     def callback(hwnd: int, _)-> bool:
         cls = win32gui.GetClassName(hwnd)
-        if cls == "Chrome_WidgetWin_1":
+        # if cls == "Chrome_WidgetWin_1":
+        if cls.startswith("Chrome"):
             _, pid = win32process.GetWindowThreadProcessId(hwnd)
             title = win32gui.GetWindowText(hwnd)
-            if title:
-                result.append((hwnd, pid, title))
+            result.append((hwnd, pid, cls, title))
         return True
 
      # Chrome peut mettre longtemps à afficher sa fenêtre
@@ -64,12 +64,12 @@ def getChromeWindowFromPid(pid: int) -> int:
         time.sleep(0.1)
 
     
-    for _hwnd, _pid, _ in result:
+    for _hwnd, _pid, _cls, _title in result:
         if _pid == pid: return _hwnd
     with open('hwnds',"w") as dump:
         dump.write(f'pid demandé: {pid}\n')
-        for _hwnd, _pid, _title in result:
-            dump.write(f'hwnd:{_hwnd}, pid:{_pid}, title:{_title}\n')
+        for _hwnd, _pid, _cls,_title in result:
+            dump.write(f'hwnd:{_hwnd}, pid:{_pid}, cls:{_cls} title:{_title}\n')
 
                    
     raise ValueError(f"Aucune fenêtre Chrome trouvée pour le PID {pid}.")

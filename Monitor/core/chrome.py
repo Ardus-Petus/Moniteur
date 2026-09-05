@@ -63,8 +63,8 @@ class ChromeDriver():
             creationflags=subprocess.CREATE_NEW_CONSOLE if os.name == 'nt' else 0
         )
         
-        # On laisse 1 secondes à Chrome
-        time.sleep(1)
+        # On laisse 3 secondes à Chrome
+        time.sleep(3)
 
         self.hwnd = getChromeWindowFromPid(self.proc.pid)
         urllib3.disable_warnings()
