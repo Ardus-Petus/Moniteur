@@ -89,7 +89,7 @@ class Excel(ABC):
 
         
         # Finalement, on retourne l'objet Excel initialisé
-        self.Appli.Visible = True
+        # self.Appli.Visible = True
         # self.Appli.DisplayAlerts = True
         self.Appli.WindowState = -4143  # xlNormal
 
