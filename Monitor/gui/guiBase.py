@@ -39,14 +39,6 @@ class guiBase:
     # ============================================================
     def update(self)->None:
 
-        if self.premier_appel:
-            setpos = self.context.get('position')
-            if setpos:
-                #self.root.propagate(False)  # On empêche le redimensionnement automatique de la fenêtre
-                setpos(ctypes.windll.user32.GetParent(self.root.winfo_id()))
-                simulate_manual_resize(self.root)
-        self.premier_appel = False
-    
         try:
             while True:
                 msg_type, payload = self.gui_queue.get_nowait()
@@ -68,7 +60,10 @@ class guiBase:
         if msg_type == "Erreur":
             entry.configure(background=PINK)
 
-
+    def traiter_position(self, msg_type, payload):
+        setpos = payload
+        setpos(ctypes.windll.user32.GetParent(self.root.winfo_id()))
+        simulate_manual_resize(self.root)
 
 #-----------------------
 # Procedures utilitaires
@@ -81,11 +76,11 @@ def simulate_manual_resize(root)->None:
         root.geometry(f"{w+delta}x{h}")
         root.update_idletasks()
 @staticmethod
-def font_default() ->tkfont.Font:
-    return tkfont.nametofont("TkDefaultFont")
+def font_(fontname:str) ->tkfont.Font:
+    return tkfont.nametofont(fontname)
 
 def font_bold() ->tkfont.Font:
-    font = font_default().copy()
+    font = font_("TkDefaultFont").copy()
     font.configure(weight="bold")
     return font
 

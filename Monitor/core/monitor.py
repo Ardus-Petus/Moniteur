@@ -50,14 +50,14 @@ class Monitor():
             presentation = clsPresentation()
             if hasattr(presentation, 'filter'):
                 self.filter = presentation.filter
-            self.context['gui']['position']=presentation.position(pos_gui)
-            self.context['appli']['position']=presentation.position(pos_appli)
             self.pos_appli = presentation.position(pos_appli)
+            self.putGUI("position", presentation.position(pos_gui))
 
+    
     def wrap_metier(self):
+        """Code du thread de l'application métier (business logic thread)"""
         pythoncom.CoInitialize()
         
-        """Lance l'application métier dans un thread."""
         self.context['appli']['putgui'] = self.putGUI
         self.context['appli']['getgui'] = self.getGUI
  

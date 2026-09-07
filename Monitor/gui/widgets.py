@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from typing import Literal
-from Monitor.gui.guiBase import guiBase, font_bold, font_default,   PINK, GREY
+from Monitor.gui.guiBase import guiBase, font_bold, font_,   PINK, GREY
 
 class MLFrame(tk.Frame):
     def __init__(self, parent: tk.Widget|tk.Tk, text: str, label_bg: str = GREY):
@@ -14,8 +14,8 @@ class MLFrame(tk.Frame):
 # Journal
 def Journal(parent: tk.Widget|tk.Tk, text:str="Journal d'exécution"):
     bloc_log = MLFrame(parent, text=text)
-    log = tk.Text(bloc_log, height=10, wrap="word",font=font_default())#type: ignore
-    log.pack(fill="x", padx=5, pady=5) # type: ignore
+    log = tk.Text(bloc_log, height=10, wrap="word",font=font_("TkDefaultFont"))
+    log.pack(fill="x", padx=5, pady=5) 
     return bloc_log, log
 
 def Input(
