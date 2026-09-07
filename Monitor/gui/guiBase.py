@@ -80,9 +80,12 @@ def simulate_manual_resize(root)->None:
     for delta in (1, -1):
         root.geometry(f"{w+delta}x{h}")
         root.update_idletasks()
+@staticmethod
+def font_default() ->tkfont.Font:
+    return tkfont.nametofont("TkDefaultFont")
 
 def font_bold() ->tkfont.Font:
-    font = tkfont.nametofont("TkDefaultFont").copy()
+    font = font_default().copy()
     font.configure(weight="bold")
     return font
 

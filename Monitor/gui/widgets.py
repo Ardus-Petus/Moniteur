@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from typing import Literal
-from Monitor.gui.guiBase import guiBase, font_bold, PINK, GREY
+from Monitor.gui.guiBase import guiBase, font_bold, font_default,   PINK, GREY
 
 class MLFrame(tk.Frame):
     def __init__(self, parent: tk.Widget|tk.Tk, text: str, label_bg: str = GREY):
@@ -14,7 +14,7 @@ class MLFrame(tk.Frame):
 # Journal
 def Journal(parent: tk.Widget|tk.Tk, text:str="Journal d'exécution"):
     bloc_log = MLFrame(parent, text=text)
-    log = tk.Text(bloc_log, height=10, wrap="word")#type: ignore
+    log = tk.Text(bloc_log, height=10, wrap="word",font=font_default())#type: ignore
     log.pack(fill="x", padx=5, pady=5) # type: ignore
     return bloc_log, log
 
@@ -52,7 +52,7 @@ def Champs(base:object, parent: tk.Widget|tk.Tk, text:str, champs:dict):    # Ch
     for i, champ in enumerate(champs.keys()):          
         frame = tk.Frame(frame_val)
 
-        label = tk.Label(frame, text=champ)
+        label = tk.Label(frame, text=champ + ' :')
         label.pack(expand=False, side='left', fill='x', anchor='e', padx=5, pady=2)
     
         field = tk.Entry(frame, width=champs[champ])   # type: ignore
@@ -91,6 +91,12 @@ def Tableau(parent: tk.Widget|tk.Tk, text="Opérations détectées", columns=[],
 
 
     tree.pack(fill="both", expand=True, anchor='n', padx=5, pady=5)   
+    def resize_columns(event: tk.Event) -> None:
+            width_total = tree.winfo_width() -20 
+            for row in columns:        # type: ignore
+                name, _, percent, min_width, _, _ = row
+                tree.column(name, width=max(int(width_total * percent), min_width))    
+    tree.bind("<Configure>", resize_columns)
     return bloc_tree, tree   
 
 def MsgErr(parent: tk.Widget|tk.Tk, text:str="Erreur") -> tuple[MLFrame, tk.Entry]:
