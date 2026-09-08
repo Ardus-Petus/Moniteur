@@ -57,7 +57,7 @@ class guiBase:
         entry = getattr(self,f'Entry_{msg_type.replace(' ', '_')}')
         entry.delete(0, 'end')
         entry.insert(0, payload)
-        if msg_type == "Erreur":
+        if msg_type.lower() == "erreur":
             entry.configure(background=PINK)
 
     def traiter_position(self, msg_type, payload):

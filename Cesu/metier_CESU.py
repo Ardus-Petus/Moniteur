@@ -58,6 +58,9 @@ class ExtractionMetier(AppMetier):
             time.sleep(0.4)
             # On atteind la page de connexion.
             # Les champs user et password sont déjà remplis
+            but_accepter_cookies = parser.getElement('//button[@id="footer_tc_privacy_button"]')
+            if but_accepter_cookies:
+                but_accepter_cookies.click()
             parser.getElementById('button', 'btn-valider').click()
         else:
             parser.getElement('//a[text()="Tableau de bord"]').click()
@@ -65,7 +68,7 @@ class ExtractionMetier(AppMetier):
 
 
         _trace("Choisir un traitement")
-        dic = getgui('form', 999999) # pyright: ignore[reportOptionalCall]
+        dic = getgui(msg_type='input', payload='form', timeout=999999)
         trt = dic['buttons']
         _trace(f'traitement choisi: {trt}')
 

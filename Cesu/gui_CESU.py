@@ -121,7 +121,7 @@ class gui(guiBase):
     def traiter_title(self, msg_type, payload):
         self.root.title(payload)
 
-    def traiter_Erreur(self, msg_type, payload):
+    def traiter_erreur(self, msg_type, payload):
         self.erreur.delete(0, 'end')
         self.erreur.insert(0, payload)
         self.erreur.configure(background=PINK)

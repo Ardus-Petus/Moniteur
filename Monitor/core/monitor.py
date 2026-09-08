@@ -3,17 +3,20 @@ import threading
 import pythoncom
 import queue
 import tkinter as tk
+from tkinter import messagebox  
 from typing import Any
 import traceback
 import ctypes
 
+
 # Queues
 gui_queue : queue.Queue[tuple[str, Any]]= queue.Queue()
 metier_queue : queue.Queue[tuple[str, Any]]= queue.Queue()
+mygui: Any = None   
 
 class Monitor():   
     def __init__(self, context):
-        self.context = context
+        self.context = context  
 
     def run(self):
         # Création de la fenêtre Tkinter avec lancement du thread Application métier
@@ -26,7 +29,8 @@ class Monitor():
         # instanciation du gui
         self.context['gui']['gui_root'] = root
         self.context['gui']['queues'] = gui_queue, metier_queue
-      
+
+        global mygui
         mygui = gui(self.context['gui'])
         
         # Lancement de l'application métier dans un thread
@@ -40,7 +44,8 @@ class Monitor():
         root.mainloop()
 
         nettoyage = self.context['appli'].get("nettoyage")
-        if nettoyage: nettoyage()
+        if nettoyage: 
+            nettoyage()
 
     def test_presentation(self):
         self.filter = None
@@ -67,11 +72,15 @@ class Monitor():
         try:
             metier.run()
         except Exception as err:
-            with open('O:\\ftrace.txt', 'w') as dump:
+            fdump = 'O:\\ftrace.txt'
+            with open(fdump, 'w') as dump:
                 dump.write(traceback.format_exc())
-            self.putGUI("log", "Fin anormale du programme")
-            self.putGUI("Erreur", f"{err.__class__.__name__} : {err}")
-        return True
+            if hasattr(mygui, 'traiter_erreur'):
+                self.putGUI("erreur", f"{err.__class__.__name__} : {err}")
+                if hasattr(mygui, 'traiter_log'):
+                    self.putGUI("log", "Fin anormale du programme")
+            messagebox.showerror("Erreur", f"{err.__class__.__name__} : {err}\n\n"
+                                 f"Consulter le fichier {fdump} pour plus de détails.")
 
     def putGUI(self, msg_type:str, payload:Any):
         if self.filter:

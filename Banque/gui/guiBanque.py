@@ -22,7 +22,7 @@ class gui(guiBase):
             "Excel": 20,
             "Nb ope": 10,
             "Dernière": 98,
-            "Erreur" :98
+            "erreur" :98
         }
         
         # Tableau
@@ -117,8 +117,8 @@ class gui(guiBase):
     def traiter_title(self, msg_type, payload):
         self.root.title(payload)
 
-    def traiter_Erreur(self, msg_type, payload):
-        self.traiter_champ('Erreur', payload)
+    def traiter_erreur(self, msg_type, payload):
+        self.traiter_champ('erreur', payload)
 
     # def traiter_erreur(self, msg_type, payload):
     #     self.erreur.delete(0, 'end')    # type: ignore
