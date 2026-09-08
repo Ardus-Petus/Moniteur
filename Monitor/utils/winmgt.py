@@ -66,7 +66,7 @@ def getChromeWindowFromPid(pid: int) -> int:
     
     for _hwnd, _pid, _cls, _title in result:
         if _pid == pid: return _hwnd
-    with open('hwnds',"w") as dump:
+    with open('O:\\hwnds.txt',"w") as dump:
         dump.write(f'pid demandé: {pid}\n')
         for _hwnd, _pid, _cls,_title in result:
             dump.write(f'hwnd:{_hwnd}, pid:{_pid}, cls:{_cls} title:{_title}\n')

@@ -67,7 +67,7 @@ class Monitor():
         try:
             metier.run()
         except Exception as err:
-            with open('.\\ftrace.txt', 'w') as dump:
+            with open('O:\\ftrace.txt', 'w') as dump:
                 dump.write(traceback.format_exc())
             self.putGUI("log", "Fin anormale du programme")
             self.putGUI("Erreur", f"{err.__class__.__name__} : {err}")

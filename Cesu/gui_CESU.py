@@ -85,9 +85,6 @@ class gui(guiBase):
 # --------------------
 #         
      
-    def close(self) -> None:
-        self.root.destroy()
-
     def parse(self, event):
         if self.responseform is None: return
         form_new = {}

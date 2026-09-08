@@ -107,22 +107,20 @@ class ExtractionMetier(AppMetier):
         self.oHTML.quit()
 
         # Vérifier l’historique
-        if self.oXL.status != self.oXL.NEW and ope.isEOF():
+        if self.oXL.status != Excel.NEW and ope.isEOF():
             raise ManqueHistorique(
                 "Le relevé HTML ne contient pas assez d'historique pour remplir le fichier Excel."
             )
 
         # Dépiler vers Excel
-        row = lastrow + 1
         tot_ope = Decimal(0)
         while operations:
             ope = operations.pop()
             self.oXL.StoreOpe(ope)
             tot_ope += Decimal(ope.montant)
-            row += 1
 
         # Solde initial + sauvegarde
-        if self.oXL.status == self.oXL.NEW:
+        if self.oXL.status == Excel.NEW:
             self.oXL.solde_initial = soldeHTML - tot_ope - tot_excl
             self.oXL.saveWorkBook()
 
