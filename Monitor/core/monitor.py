@@ -1,51 +1,136 @@
-# main_LBP.py
 import threading
-import pythoncom
-import queue
-import tkinter as tk
-from tkinter import messagebox  
-from typing import Any
 import traceback
 import ctypes
+import tkinter as tk
+from tkinter import messagebox
+import sys
+import queue
+import pythoncom
+gui_queue = queue.Queue()
+metier_queue = queue.Queue()
+mygui = None
 
 
-# Queues
-gui_queue : queue.Queue[tuple[str, Any]]= queue.Queue()
-metier_queue : queue.Queue[tuple[str, Any]]= queue.Queue()
-mygui: Any = None   
-
-class Monitor():   
-    def __init__(self, context):
-        self.context = context  
+class ThreadMetier(threading.Thread):
+    """Thread métier qui capture les exceptions pour les remonter au thread principal."""
+    def __init__(self, target, *args, **kwargs):
+        super().__init__(daemon=True)
+        self._target = target
+        self._args = args
+        self._kwargs = kwargs
+        self.exc_info = None
 
     def run(self):
-        # Création de la fenêtre Tkinter avec lancement du thread Application métier
-        ctypes.windll.shcore.SetProcessDpiAwareness(2)  # 2 = Per Monitor DPI Aware
+        try:
+            self._target(*self._args, **self._kwargs)
+        except Exception:
+            self.exc_info = sys.exc_info()
+
+
+class Monitor:
+    def __init__(self, context):
+        self.context = context
+        self.exc_info = None   # <--- Exception globale remontée ici
+
+    # ------------------------------------------------------------------
+    # Gestion centralisée des exceptions (appelée uniquement par run())
+    # ------------------------------------------------------------------
+    def traiter_exception(self, err, tb):
+        fdump = 'O:\\ftrace.txt'
+
+        with open(fdump, 'w') as dump:
+            dump.write(''.join(traceback.format_tb(tb)))
+            dump.write(f"\n{err.__class__.__name__}: {err}\n")
+
+        if hasattr(mygui, 'traiter_erreur'):
+            self.putGUI("erreur", f"{err.__class__.__name__} : {err}")
+            if hasattr(mygui, 'traiter_log'):
+                self.putGUI("log", "Fin anormale du programme")
+
+        messagebox.showerror(
+            "Erreur",
+            f"{err.__class__.__name__} : {err}\n\n"
+            f"Consulter le fichier {fdump} pour plus de détails."
+        )
+
+    # ------------------------------------------------------------------
+    # Surveillance du thread métier
+    # ------------------------------------------------------------------
+    def surveiller_thread(self, root, t):
+        if t.exc_info:
+            self.exc_info = t.exc_info
+            root.quit()   # <--- stoppe mainloop pour remonter dans run()
+            return
+
+        if t.is_alive():
+            root.after(50, self.surveiller_thread, root, t)
+
+    # ------------------------------------------------------------------
+    # Surveillance du GUI.update()
+    # ------------------------------------------------------------------
+    def safe_gui_update(self):
+        try:
+            mygui.update()
+        except Exception as err:
+            self.exc_info = (err.__class__, err, err.__traceback__)
+            root = self.context['gui']['gui_root']
+            root.quit()   # <--- stoppe mainloop pour remonter dans run()
+            return
+
+        root = self.context['gui']['gui_root']
+        root.after(100, self.safe_gui_update)
+
+    # ------------------------------------------------------------------
+    # Lancement du GUI + thread métier
+    # ------------------------------------------------------------------
+    def runtask(self):
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)
         root = tk.Tk()
 
-        # Préparation du GUI
-        gui =  self.context['core']['gui']
-        gui_update = gui.update
-        # instanciation du gui
+        gui_class = self.context['core']['gui']
         self.context['gui']['gui_root'] = root
         self.context['gui']['queues'] = gui_queue, metier_queue
 
         global mygui
-        mygui = gui(self.context['gui'])
-        
-        # Lancement de l'application métier dans un thread
+
+        # Surveillance des exceptions dans mygui.__init__
+        try:
+            mygui = gui_class(self.context['gui'])
+        except Exception as err:
+            self.exc_info = (err.__class__, err, err.__traceback__)
+            return
+
+        # Thread métier
         self.context['appli']['queues'] = gui_queue, metier_queue
         self.test_presentation()
-        t = threading.Thread(target=self.wrap_metier, daemon=True)
+
+        t = ThreadMetier(target=self.wrap_metier)
         t.start()
 
-        # Affichage du GUI dans le Thread principal
-        root.after(100, mygui.update)
+        root.after(50, self.surveiller_thread, root, t)
+        root.after(100, self.safe_gui_update)
+
         root.mainloop()
 
+        # Nettoyage
         nettoyage = self.context['appli'].get("nettoyage")
-        if nettoyage: 
+        if nettoyage:
             nettoyage()
+
+    # ------------------------------------------------------------------
+    # Point d'entrée Monitor : capture globale
+    # ------------------------------------------------------------------
+    def run(self):
+        try:
+            self.runtask()
+
+            # Si une exception a été remontée
+            if self.exc_info:
+                exc_type, exc, tb = self.exc_info
+                raise exc.with_traceback(tb)
+
+        except Exception as err:
+            self.traiter_exception(err, err.__traceback__)
 
     def test_presentation(self):
         self.filter = None
@@ -68,20 +153,9 @@ class Monitor():
  
         appliMetier = self.context['core']['application']
         metier = appliMetier(self.context['appli'])
-
-        try:
-            metier.run()
-        except Exception as err:
-            fdump = 'O:\\ftrace.txt'
-            with open(fdump, 'w') as dump:
-                dump.write(traceback.format_exc())
-            if hasattr(mygui, 'traiter_erreur'):
-                self.putGUI("erreur", f"{err.__class__.__name__} : {err}")
-                if hasattr(mygui, 'traiter_log'):
-                    self.putGUI("log", "Fin anormale du programme")
-            messagebox.showerror("Erreur", f"{err.__class__.__name__} : {err}\n\n"
-                                 f"Consulter le fichier {fdump} pour plus de détails.")
-
+        metier.run()
+ 
+ 
     def putGUI(self, msg_type:str, payload:Any):
         if self.filter:
             if self.filter(msg_type, payload, self.pos_appli):
