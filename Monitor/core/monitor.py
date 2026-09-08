@@ -3,13 +3,14 @@ import traceback
 import ctypes
 import tkinter as tk
 from tkinter import messagebox
+from typing import Any
 import sys
 import queue
 import pythoncom
 gui_queue = queue.Queue()
 metier_queue = queue.Queue()
 mygui = None
-
+root = None
 
 class ThreadMetier(threading.Thread):
     """Thread métier qui capture les exceptions pour les remonter au thread principal."""
@@ -36,20 +37,22 @@ class Monitor:
     # Gestion centralisée des exceptions (appelée uniquement par run())
     # ------------------------------------------------------------------
     def traiter_exception(self, err, tb):
+        global mygui, gui_queue
         fdump = 'O:\\ftrace.txt'
+        message = f"{err.__class__.__name__} : {err}"
 
         with open(fdump, 'w') as dump:
-            dump.write(''.join(traceback.format_tb(tb)))
-            dump.write(f"\n{err.__class__.__name__}: {err}\n")
+            dump.write(''.join(traceback.format_tb(tb))+'\n')
+            dump.write(message)
 
         if hasattr(mygui, 'traiter_erreur'):
-            self.putGUI("erreur", f"{err.__class__.__name__} : {err}")
-            if hasattr(mygui, 'traiter_log'):
-                self.putGUI("log", "Fin anormale du programme")
+            self.putGUI("erreur", message)
+        if hasattr(mygui, 'traiter_log'):
+            self.putGUI("log", "Fin anormale du programme")
 
         messagebox.showerror(
             "Erreur",
-            f"{err.__class__.__name__} : {err}\n\n"
+            message + '\n\n'
             f"Consulter le fichier {fdump} pour plus de détails."
         )
 
@@ -69,15 +72,14 @@ class Monitor:
     # Surveillance du GUI.update()
     # ------------------------------------------------------------------
     def safe_gui_update(self):
+        global mygui, root
         try:
             mygui.update()
         except Exception as err:
             self.exc_info = (err.__class__, err, err.__traceback__)
-            root = self.context['gui']['gui_root']
             root.quit()   # <--- stoppe mainloop pour remonter dans run()
             return
 
-        root = self.context['gui']['gui_root']
         root.after(100, self.safe_gui_update)
 
     # ------------------------------------------------------------------
@@ -85,13 +87,13 @@ class Monitor:
     # ------------------------------------------------------------------
     def runtask(self):
         ctypes.windll.shcore.SetProcessDpiAwareness(2)
+        global root, mygui, gui_queue, metier_queue
         root = tk.Tk()
 
         gui_class = self.context['core']['gui']
         self.context['gui']['gui_root'] = root
         self.context['gui']['queues'] = gui_queue, metier_queue
 
-        global mygui
 
         # Surveillance des exceptions dans mygui.__init__
         try:
@@ -157,9 +159,16 @@ class Monitor:
  
  
     def putGUI(self, msg_type:str, payload:Any):
+        global mygui, gui_queue, metier_queue
         if self.filter:
             if self.filter(msg_type, payload, self.pos_appli):
                 return
+        if msg_type[0] == '!' :
+            if not hasattr(mygui,f'Entry_{msg_type[1:].replace(" " , "_")}'):
+                raise AttributeError(f"Le message \"{msg_type}\" n'est pas associé à un Entry dans le GUI")
+        else:
+            if not hasattr(mygui, f'traiter_{msg_type}'):
+                raise AttributeError(f"Le message \"{msg_type}\" n'a pas de méthode de traitement associée")
             # réactions côté présentation
           
              # transmettre directement au GUI

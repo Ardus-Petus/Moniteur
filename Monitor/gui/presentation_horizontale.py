@@ -38,13 +38,13 @@ class Presentation:
         }[pos]
 
     def filter(self,msg_type, payload, pos):
-        if msg_type == "html_opened":
+        if msg_type == "HTML_pos":
             hwnd_html = payload
             pos(hwnd_html)
             winmgt.focus(hwnd_html)
             return True
 
-        elif msg_type == "XL_opened":
+        elif msg_type == "XL_pos":
             hwnd_excel = payload
             pos(hwnd_excel)
             return True

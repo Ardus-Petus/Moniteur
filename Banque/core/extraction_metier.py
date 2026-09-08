@@ -45,14 +45,15 @@ class ExtractionMetier(AppMetier):
         self.context['nettoyage'] = nettoyage
 
         _tr('Début du programme d\'extraction')
+        _cb("title", "Extraction Metier")
         _cb('!Date', datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
 
         # Ouverture HTML
         self.oHTML = self.context['HTML']()
 
         # Signaler au GUI que HTML est ouvert (pour positionnement fenêtre)
-        _cb("html_opened", self.oHTML.hwnd)
-
+        _cb("HTML_pos", self.oHTML.hwnd)
+        
         # Attente connexion + relevé
         _tr("Attente de la connexion au site...")
         self.oHTML.waitForCnxComptes()
@@ -67,7 +68,7 @@ class ExtractionMetier(AppMetier):
         _tr("Ouverture classeur Excel")
         self.oXL = self.context['Excel'](acctNo)
         _tr("Classeur Excel ouvert")
-        _cb("XL_opened", self.oXL.hwnd)   # pour que la présentation positionne la fenêtre Excel
+        _cb("XL_pos", self.oXL.hwnd)   # pour que la présentation positionne la fenêtre Excel
         self.oXL.setVisible(True)
         _cb("!Excel", self.oXL.getStatusString())
         # Recherche dernière opération Excel

@@ -45,12 +45,10 @@ def close_window(hwnd: int) -> None:
 # Récupérer le HWND d’un processus *
 # ---------------------------------------------------------
 def getChromeWindowFromPid(pid: int) -> int:
-    result = []
-
     def callback(hwnd: int, _)-> bool:
         cls = win32gui.GetClassName(hwnd)
-        # if cls == "Chrome_WidgetWin_1":
-        if cls.startswith("Chrome"):
+        if cls == "Chrome_WidgetWin_1":
+        # if cls.startswith("Chrome"):
             _, pid = win32process.GetWindowThreadProcessId(hwnd)
             title = win32gui.GetWindowText(hwnd)
             result.append((hwnd, pid, cls, title))
@@ -58,19 +56,21 @@ def getChromeWindowFromPid(pid: int) -> int:
 
      # Chrome peut mettre longtemps à afficher sa fenêtre
     for _ in range(60):  # 6 secondes
+        result = []
         win32gui.EnumWindows(callback, None) #type: ignore
         if result:
             break
         time.sleep(0.1)
 
     
-    for _hwnd, _pid, _cls, _title in result:
-        if _pid == pid: return _hwnd
     with open('O:\\hwnds.txt',"w") as dump:
         dump.write(f'pid demandé: {pid}\n')
         for _hwnd, _pid, _cls,_title in result:
             dump.write(f'hwnd:{_hwnd}, pid:{_pid}, cls:{_cls} title:{_title}\n')
 
+    for _hwnd, _pid, _cls, _title in result:
+        if _pid == pid: return _hwnd
+    
                    
     raise ValueError(f"Aucune fenêtre Chrome trouvée pour le PID {pid}.")
 
