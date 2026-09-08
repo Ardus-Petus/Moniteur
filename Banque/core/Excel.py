@@ -10,11 +10,12 @@ from decimal import Decimal
 class TablibError(Exception):
     pass
 
-EXIST, OPEN, NEW = range(3)
+
 class Excel(ABC):
     """Classe pour gérer les opérations bancaires dans un fichier Excel."""
      
-     
+    EXIST, OPEN, NEW = range(3)
+
     def __init__(self, acct:str, rep:str='', worksheetname:str='', modelpath:str=''):
         """Initialise l'objet COM Excel et affiche le classeur pour un compte donné.
         Args:
