@@ -12,75 +12,25 @@ metier_queue = queue.Queue()
 mygui = None
 root = None
 
-class ThreadMetier(threading.Thread):
-    """Thread métier qui capture les exceptions pour les remonter au thread principal."""
-    def __init__(self, target, *args, **kwargs):
-        super().__init__(daemon=True)
-        self._target = target
-        self._args = args
-        self._kwargs = kwargs
-        self.exc_info = None
-
-    def run(self):
-        try:
-            self._target(*self._args, **self._kwargs)
-        except Exception:
-            self.exc_info = sys.exc_info()
-
-
 class Monitor:
     def __init__(self, context):
         self.context = context
         self.exc_info = None   # <--- Exception globale remontée ici
 
     # ------------------------------------------------------------------
-    # Gestion centralisée des exceptions (appelée uniquement par run())
+    # Point d'entrée Monitor : capture globale
     # ------------------------------------------------------------------
-    def traiter_exception(self, err, tb):
-        global mygui, gui_queue
-        fdump = 'O:\\ftrace.txt'
-        message = f"{err.__class__.__name__} : {err}"
-
-        with open(fdump, 'w') as dump:
-            dump.write(''.join(traceback.format_tb(tb))+'\n')
-            dump.write(message)
-
-        if hasattr(mygui, 'traiter_erreur'):
-            self.putGUI("erreur", message)
-        if hasattr(mygui, 'traiter_log'):
-            self.putGUI("log", "Fin anormale du programme")
-
-        messagebox.showerror(
-            "Erreur",
-            message + '\n\n'
-            f"Consulter le fichier {fdump} pour plus de détails."
-        )
-
-    # ------------------------------------------------------------------
-    # Surveillance du thread métier
-    # ------------------------------------------------------------------
-    def surveiller_thread(self, root, t):
-        if t.exc_info:
-            self.exc_info = t.exc_info
-            root.quit()   # <--- stoppe mainloop pour remonter dans run()
-            return
-
-        if t.is_alive():
-            root.after(50, self.surveiller_thread, root, t)
-
-    # ------------------------------------------------------------------
-    # Surveillance du GUI.update()
-    # ------------------------------------------------------------------
-    def safe_gui_update(self):
-        global mygui, root
+    def run(self):
         try:
-            mygui.update()
-        except Exception as err:
-            self.exc_info = (err.__class__, err, err.__traceback__)
-            root.quit()   # <--- stoppe mainloop pour remonter dans run()
-            return
+            self.runtask()
 
-        root.after(100, self.safe_gui_update)
+            # Si une exception a été remontée
+            if self.exc_info:
+                exc_type, exc, tb = self.exc_info
+                raise exc.with_traceback(tb)
+
+        except Exception as err:
+            self.traiter_exception(err, err.__traceback__)
 
     # ------------------------------------------------------------------
     # Lancement du GUI + thread métier
@@ -120,19 +70,39 @@ class Monitor:
             nettoyage()
 
     # ------------------------------------------------------------------
-    # Point d'entrée Monitor : capture globale
+    # Gestion centralisée des exceptions (appelée uniquement par run())
     # ------------------------------------------------------------------
-    def run(self):
-        try:
-            self.runtask()
+    def traiter_exception(self, err, tb):
+        global mygui, gui_queue
+        fdump = 'O:\\ftrace.txt'
+        message = f"{err.__class__.__name__} : {err}"
 
-            # Si une exception a été remontée
-            if self.exc_info:
-                exc_type, exc, tb = self.exc_info
-                raise exc.with_traceback(tb)
+        with open(fdump, 'w') as dump:
+            dump.write(''.join(traceback.format_tb(tb))+'\n')
+            dump.write(message)
 
-        except Exception as err:
-            self.traiter_exception(err, err.__traceback__)
+        if hasattr(mygui, 'traiter_erreur'):
+            self.putGUI("erreur", message)
+        if hasattr(mygui, 'traiter_log'):
+            self.putGUI("log", "Fin anormale du programme")
+
+        messagebox.showerror(
+            "Erreur",
+            message + '\n\n'
+            f"Consulter le fichier {fdump} pour plus de détails."
+        )
+
+    # ------------------------------------------------------------------
+    # Surveillance du thread métier
+    # ------------------------------------------------------------------
+    def surveiller_thread(self, root, t):
+        if t.exc_info:
+            self.exc_info = t.exc_info
+            root.quit()   # <--- stoppe mainloop pour remonter dans run()
+            return
+
+        if t.is_alive():
+            root.after(50, self.surveiller_thread, root, t)
 
     def test_presentation(self):
         self.filter = None
@@ -157,7 +127,20 @@ class Monitor:
         metier = appliMetier(self.context['appli'])
         metier.run()
  
- 
+    # ------------------------------------------------------------------
+    # Surveillance du GUI.update()
+    # ------------------------------------------------------------------
+    def safe_gui_update(self):
+        global mygui, root
+        try:
+            mygui.update()
+        except Exception as err:
+            self.exc_info = (err.__class__, err, err.__traceback__)
+            root.quit()   # <--- stoppe mainloop pour remonter dans run()
+            return
+
+        root.after(100, self.safe_gui_update)
+
     def putGUI(self, msg_type:str, payload:Any):
         global mygui, gui_queue, metier_queue
         if self.filter:
@@ -182,7 +165,23 @@ class Monitor:
             raise TimeoutError(f"Timeout sur saisie {payload}")
         return reponse
 
+class ThreadMetier(threading.Thread):
+    """Thread métier qui capture les exceptions pour les remonter au thread principal."""
+    def __init__(self, target, *args, **kwargs):
+        super().__init__(daemon=True)
+        self._target = target
+        self._args = args
+        self._kwargs = kwargs
+        self.exc_info = None
+
+    def run(self):
+        try:
+            self._target(*self._args, **self._kwargs)
+        except Exception:
+            self.exc_info = sys.exc_info()
+
 class Context(dict):
+    """Contexte centralisé pour stocker les informations sur le GUI, le core et l'application."""
     def __init__(self):
         self['gui']={}
         self['core']={}
