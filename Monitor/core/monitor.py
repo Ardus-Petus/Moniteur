@@ -7,6 +7,7 @@ from typing import Any
 import sys
 import queue
 import pythoncom
+from inspect import isclass
 gui_queue = queue.Queue()
 metier_queue = queue.Queue()
 mygui = None
@@ -41,6 +42,9 @@ class Monitor:
         root = tk.Tk()
 
         gui_class = self.context['core']['gui']
+        if not isclass(gui_class):
+            raise TypeError("GUI not callable")
+        
         self.context['gui']['gui_root'] = root
         self.context['gui']['queues'] = gui_queue, metier_queue
 
@@ -59,26 +63,26 @@ class Monitor:
         t = ThreadMetier(target=self.wrap_metier)
         t.start()
 
-        root.after(50, self.surveiller_thread, root, t)
+        root.after(50, self.surveiller_thread, t)
         root.after(100, self.safe_gui_update)
 
         root.mainloop()
 
         # Nettoyage
         nettoyage = self.context['appli'].get("nettoyage")
-        if nettoyage:
+        if nettoyage and callable(nettoyage):
             nettoyage()
 
     # ------------------------------------------------------------------
     # Gestion centralisée des exceptions (appelée uniquement par run())
     # ------------------------------------------------------------------
-    def traiter_exception(self, err, tb):
+    def traiter_exception(self, err, traceBack):
         global mygui, gui_queue
         fdump = 'O:\\ftrace.txt'
         message = f"{err.__class__.__name__} : {err}"
 
         with open(fdump, 'w') as dump:
-            dump.write(''.join(traceback.format_tb(tb))+'\n')
+            dump.write(''.join(traceback.format_tb(traceBack))+'\n')
             dump.write(message)
 
         if hasattr(mygui, 'traiter_erreur'):
@@ -95,20 +99,24 @@ class Monitor:
     # ------------------------------------------------------------------
     # Surveillance du thread métier
     # ------------------------------------------------------------------
-    def surveiller_thread(self, root, t):
+    def surveiller_thread(self, t):
+        global root
         if t.exc_info:
             self.exc_info = t.exc_info
-            root.quit()   # <--- stoppe mainloop pour remonter dans run()
+            root.quit()   # <--- stoppe mainloop pour que runtask() sorte de mainloop et traite l'exception dans run()
             return
 
         if t.is_alive():
-            root.after(50, self.surveiller_thread, root, t)
+            root.after(50, self.surveiller_thread, t)
 
     def test_presentation(self):
         self.filter = None
         clsPresentation, pos_gui, pos_appli = \
             self.context['core'].get('presentation',[None, None, None]) 
+       
         if clsPresentation:
+            if not isclass(clsPresentation):
+                raise TypeError("Presentation n\'est pas une classe")
             presentation = clsPresentation()
             if hasattr(presentation, 'filter'):
                 self.filter = presentation.filter
@@ -124,6 +132,8 @@ class Monitor:
         self.context['appli']['getgui'] = self.getGUI
  
         appliMetier = self.context['core']['application']
+        if not isclass(appliMetier):
+            raise TypeError("Application n\'est pas une classe")
         metier = appliMetier(self.context['appli'])
         metier.run()
  
@@ -181,7 +191,7 @@ class ThreadMetier(threading.Thread):
             self.exc_info = sys.exc_info()
 
 class Context(dict):
-    """Contexte centralisé pour stocker les informations sur le GUI, le core et l'application."""
+    """Contexte centralisé pour transmettreles informations au GUI, au core et à l'application."""
     def __init__(self):
         self['gui']={}
         self['core']={}
@@ -191,12 +201,10 @@ class Context(dict):
         self.appli=self['appli']
 
     def set_application(self, appli):
-        if not callable(appli):
-            raise TypeError("Application not callable")
         self.core['application'] = appli
 
     def set_gui(self, gui):
-        self.core['gui']=gui
+         self.core['gui']=gui
 
     def set_presentation(self, pres, pos_gui, pos_appli):
         self.core['presentation']=(pres, pos_gui, pos_appli)

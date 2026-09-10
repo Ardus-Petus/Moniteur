@@ -7,6 +7,7 @@ from Banque.core.HTML import HTML
 from Banque.core.Ope import Ope
 from Monitor.core.AppMetier import AppMetier
 from datetime import datetime
+from inspect import isclass
 
 import importlib.resources as res
 
@@ -49,7 +50,10 @@ class ExtractionMetier(AppMetier):
         _cb('!Date', datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
 
         # Ouverture HTML
-        self.oHTML = self.context['HTML']()
+        clsHTML = self.context['HTML']
+        if not (isclass(clsHTML) and issubclass(clsHTML, HTML)):
+            raise TypeError("La classe HTML fournie n'est pas un sous-type de HTML")
+        self.oHTML = clsHTML()
 
         # Signaler au GUI que HTML est ouvert (pour positionnement fenêtre)
         _cb("HTML_pos", self.oHTML.hwnd)
@@ -65,8 +69,11 @@ class ExtractionMetier(AppMetier):
         _cb("!N° compte", acctNo)
 
         # Ouverture Excel
-        _tr("Ouverture classeur Excel")
-        self.oXL = self.context['Excel'](acctNo)
+        # _tr("Ouverture classeur Excel")
+        clsExcel = self.context['Excel']
+        if not (isclass(clsExcel) and issubclass(clsExcel, Excel)):
+               raise TypeError("La classe Excel fournie n'est pas un sous-type de Excel")
+        self.oXL = clsExcel(acctNo)
         _tr("Classeur Excel ouvert")
         _cb("XL_pos", self.oXL.hwnd)   # pour que la présentation positionne la fenêtre Excel
         self.oXL.setVisible(True)

@@ -1,11 +1,9 @@
-
-
 from Monitor.core.monitor import Monitor, Context  
-from LBP.Excel_LBP import Excel_LBP as Excel
-from LBP.HTML_LBP import HTML_LBP as HTML
 from Banque.core.extraction_metier import ExtractionMetier as application
 from Banque.gui.guiBanque import gui
 from Monitor.gui.presentation_horizontale import Presentation
+from LBP.Excel_LBP import Excel_LBP as Excel
+from LBP.HTML_LBP import HTML_LBP as HTML
 
 context=Context()            
 
