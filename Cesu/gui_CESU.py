@@ -27,8 +27,8 @@ class gui(guiBase):
         
         # Tableau
         tree_columns = [
-            ('date',    'Date',     0.10, int(100*self.ratio),    False,  'w'),
-            ('libelle', 'Libellé',  0.65, int(0),                 True,   'w'),
+            ('date',    'Date',     0.15, int(100*self.ratio),    False,  'w'),
+            ('libelle', 'Libellé',  0.70, int(0),                 True,   'w'),
             ('montant', 'Montant',  0.15, int(150*self.ratio),    False,  'e'),
         ]
 
@@ -80,6 +80,7 @@ class gui(guiBase):
         bloc_erreur.pack(fill="x", padx=5, pady=5)  
         bloc_buttons.pack(fill="x", padx=5, pady=5)
 
+        self.bloc_label = bloc_tree
 #---------------------
 # Méthodes utilitaires
 # --------------------

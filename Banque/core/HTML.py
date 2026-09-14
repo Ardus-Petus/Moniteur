@@ -1,7 +1,7 @@
 import os
 from selenium.webdriver.remote.webelement import WebElement
 
-import Monitor.core.chrome as chrome
+from Monitor.core.chrome_Playwright import ChromeDriver
 from Banque.core.Ope import Ope
 from abc import ABC, abstractmethod
 
@@ -11,13 +11,13 @@ os.environ['WDM_SSL_VERIFY'] = '0'
 class HTML(ABC):
     def __init__(self, url:str=''):
         self.rows: list[WebElement] = []    # Liste des lignes du tableau HTML
-        self.chrome = chrome.ChromeDriver(url)
+        self.chrome = ChromeDriver(url)
         self.proc = self.chrome.proc
         self.hwnd = self.chrome.hwnd
                     
     def quit(self) -> None:
         """Ferme proprement Selenium et le processus Chrome associé."""
-        #self.driver.quit()
+        self.chrome.terminate()
         self.proc.terminate()
         self.proc.wait()
 
@@ -33,6 +33,9 @@ class HTML(ABC):
 
     def findCells(self, row: WebElement) -> list[WebElement]:
         return self.chrome.findCells(row)
+
+    # def getText(self, element: WebElement) -> str:
+    #     return self.chrome.getText(element)
     
     # Méthodes qui doivent être implémentées dans une classe dérivée
     @abstractmethod

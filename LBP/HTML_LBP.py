@@ -1,5 +1,4 @@
 from selenium.webdriver.remote.webelement import WebElement
-
 from Banque.core.HTML import HTML
 from Banque.core.Ope import Ope
 import datetime
@@ -21,6 +20,7 @@ class HTML_LBP(HTML):
            accède à la page de connexion à l'espace client de La Banque Postale
         """
         super().__init__(self.URL)
+        
 
     def waitForCnxComptes(self) -> None:
         """Attend que la page Comptes et Contrats soit chargée."""
@@ -55,25 +55,26 @@ class HTML_LBP(HTML):
     def getHTMLOpe(self, i: int) -> Ope:
         """Retourne l'opération à l'index i, renvoie EOF si l'index est hors du tableau.
         Args:
-            i (int): L'index dans le tableau self.rowsde l'opération à récupérer."""
+            i (int): L'index dans le tableau self.rows de l'opération à récupérer."""
 
         # Fonction interne pour traiter une ligne du tableau self.rows
         def _extraire_ope(row: WebElement) -> Ope:             
             """Prend une ligne de tableau HTML self.rowset retourne un objet Ope pur.
             Args:
                 row: Un élément WebElement représentant une ligne de tableau HTML."""
-            cells =self.findCells(row)  # Récupère les cellules de la ligne
+            cells =self.chrome.findCells(row)  # Récupère les cellules de la ligne
 
             # Il arrive épisodiquement que le texte soit précédé d'un intitulé préfixe
             # Fonction interne pour récupérer la valeur d'une cellule et retirer le préfixe str si présent
             def _getstr(j:int,str:str) -> str:       
-                val = cells[j].text
+                val = (cells[j]).text
                 if val.startswith(str):
                     val = val[len(str)+1:]          # +1 car il y a un \n après le préfixe
                 return val.strip()
 
             # corps de extraire_ope
-            date = datetime.datetime.strptime(_getstr(0, "Date"), '%d/%m/%Y')
+            dte = _getstr(0, "Date")
+            date = datetime.datetime.strptime(dte, '%d/%m/%Y')
             lib = " ".join(_getstr(1, "Libellé").replace('\n', ' ').split())
             montant_str = re.sub('[ \u00a0€]', '', _getstr(3, "Montant").replace(',', '.').replace('\u2212', '-'))
             

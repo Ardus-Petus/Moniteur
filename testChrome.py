@@ -1,4 +1,4 @@
-from Monitor.core.chrome import ChromeDriver
+from Monitor.core.chrome_Selenium import ChromeDriver
 
 chrome = ChromeDriver('https://www.google.fr')
 
