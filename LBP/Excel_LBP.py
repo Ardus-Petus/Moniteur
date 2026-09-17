@@ -23,7 +23,7 @@ class Excel_LBP(Excel):
 
     def getlistRows(self) -> win32.CDispatch: #(Objet listrows)
         """Retourne la liste des lignes de la feuille de calcul Excel."""
-        return self.WorkSheet.ListObjects("Banque").ListRows # type: ignore
+        return self.WorkSheet.ListObjects(1).ListRows # type: ignore
 
     def StoreOpe(self, ope:Ope) -> None:
         """Enregistre une opération à la fin du tableau Excel."""    
@@ -45,7 +45,7 @@ class Excel_LBP(Excel):
     def XLOpe(self, range:win32.CDispatch)->Ope:
         return Ope(
             datetime.strptime(range.Columns("B").Text, '%d/%m/%Y'),        #date
-            ' '.join(range.columns('C').Text.replace('\n', ' ').split()),  #lib
+            ' '.join(range.Columns('C').Text.replace('\n', ' ').split()),  #lib
             range.Columns("D").Value                                       #montant
         )
         

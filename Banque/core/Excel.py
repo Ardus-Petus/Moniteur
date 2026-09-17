@@ -67,7 +67,7 @@ class Excel(ABC):
 
         # On récupère le hwnd à partir de la collection Windows du classeur
         # (on considère qu'il n'y a qu'une fenêtre)
-        self.hwnd = self.mgr.hwnd = self.WorkBook.Windows[0].Hwnd
+        self.hwnd = self.mgr.hwnd = self.WorkBook.Windows[1].Hwnd
 
 
         # On récupère la feuille de calcul "Banque" du classeur

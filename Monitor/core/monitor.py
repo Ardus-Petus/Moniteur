@@ -81,7 +81,7 @@ class Monitor:
         fdump = 'O:\\ftrace.txt'
         message = f"{err.__class__.__name__} : {err}"
 
-        with open(fdump, 'w') as dump:
+        with open(fdump, 'w', encoding='utf-8') as dump:
             dump.write(''.join(traceback.format_tb(traceBack))+'\n')
             dump.write(message)
 

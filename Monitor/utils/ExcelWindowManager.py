@@ -2,6 +2,8 @@ import win32com.client as win32
 import win32gui
 import win32con
 import time
+import Monitor.utils.winmgt as winmgt
+
 class ExcelWindowManager:
     def __init__(self):
         self.appli, self.excel_was_running = self._get_excel_instance()
@@ -31,4 +33,13 @@ class ExcelWindowManager:
        time.sleep(0.1)
        win32gui.ShowWindow(self.hwnd, win32con.SW_MAXIMIZE)
        
+    def cascade(self) -> None:
+        list_hwnds = [win.Hwnd for win in self.appli.Windows]
+        dx = 100
+        dy = 100
+        screen_width, screen_height = winmgt.get_screen_size()
+        width = screen_width - dx*len(list_hwnds)
+        height = screen_height - dy*len(list_hwnds)
+        for i, hwnd in enumerate(list_hwnds):
+            winmgt.setWindowPos(hwnd, dx*i, dy*i, width, height)
  

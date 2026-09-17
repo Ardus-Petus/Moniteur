@@ -135,27 +135,23 @@ class ChromeDriver(Chrome):   # ← ta classe parente
         return ILocator(loc) if loc.count() > 0 else None
 
     def findElements(self, selector, base=None):
-        b = self.page if base is None else base._loc
-
         # XPATH → Playwright format
         if selector.startswith("//") or selector.startswith(".//"):
             selector = f"xpath={selector}"
 
-        loc = b.locator(selector)
+        # Base = page ou locator
+        root = self.page if base is None else base.locator
 
-        # Scroll réel + stabilisation (Facebook lazy-loading)
-        last = -1
-        while True:
-            self.page.mouse.wheel(0, 2000)      # scroll réel
-            self.page.wait_for_timeout(100)    # laisser React charger
+        # Récupération SANS scroll
+        handles = root.locator(selector).element_handles()
 
-            count = loc.count()
-            if count == last:
-                break
-            last = count
+        # Conversion en ILocator
+        locators = [
+            ILocator(root.locator(f"{selector} >> nth={i}"))
+            for i in range(len(handles))
+        ]
 
-        # Retourner un ILocator qui représente la liste complète
-        return ILocator(loc)
+        return locators
 
     def findCells(self, base=None):
         return self.findElements("td", base)
@@ -170,7 +166,8 @@ class ChromeDriver(Chrome):   # ← ta classe parente
         self.page.wait_for_url(re.compile(url), timeout=delay * 1000)
 
     def terminate(self):
-        self.pw.stop()
+        # self.pw.stop()
+        pass
     # ============================================================
     #  FENÊTRES / ONGLET — version Playwright (équivalente Selenium)
     # ============================================================

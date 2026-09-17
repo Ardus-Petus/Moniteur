@@ -129,44 +129,6 @@ class gui(guiBase):
         self.tree.insert("", "end", values=payload) # payload est un tuple # type: ignore
         self.tree.yview_moveto(1)  # On scroll vers le bas pour voir la dernière ligne ajoutée # type: ignore
 
-    dejavu = []
-    def traiter_popup(self, msg_type, payload):
-        # Création de la fenêtre secondaire
-        popup = tk.Toplevel(self.root)
-        popup.attributes('-topmost', True)
-        popup.title("choix du compte")
-        X = self.root.winfo_screenwidth()
-        Y = self.root.winfo_screenheight()
-        x = (X//2) + 100
-        y = (Y//2) 
-        popup.geometry(f"+{x}+{y}")
-        
-        # Rendre la popup modale (optionnel : empêche d'interagir avec la fenêtre principale)
-        popup.grab_set() 
-        
-        # Contenu de la popup
-        for lib in payload: 
-            button = tk.Button(popup, text=lib, width=60, pady=10)
-            button.configure(command=lambda but=button: valid(but))
-            button.pack(padx=5, pady=5, fill='x')
-            if lib in self.dejavu:
-                button.configure(state=tk.DISABLED)
-
-        bouton_fermer = tk.Button(popup, text="Fermer", command=lambda : valid(None))
-
-        bouton_fermer.pack(padx=5, pady=5)
-        def valid(button):
-            if button is None:
-                result = '__fermer__'
-            else:
-                result = button["text"]
-                self.dejavu.append(result)
-
-            self.metier_queue.put((msg_type, result)) # type: ignore
-            popup.destroy()
-
-       
-
 if __name__ == "__main__":
     context = {}
     root = tk.Tk()
