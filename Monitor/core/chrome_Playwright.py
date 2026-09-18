@@ -162,6 +162,9 @@ class ChromeDriver(Chrome):   # ← ta classe parente
     def get(self, url: str):
         self.page.goto(url)
 
+    def getCurrentUrl(self) -> str:
+        return self.page.url
+
     def waitFor(self, url: str, delay: int):
         self.page.wait_for_url(re.compile(url), timeout=delay * 1000)
 

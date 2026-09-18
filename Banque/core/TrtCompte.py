@@ -5,6 +5,7 @@ from decimal import Decimal
 import locale
 from typing import Any
 import importlib.resources as res
+import re
 
 class TrtCompte():
     def __init__(self, context, oHTML):
@@ -14,24 +15,23 @@ class TrtCompte():
         self.context = context
         self.tabexcl = res.read_text('LBP', 'exclusions.txt')
  
-    def run(self):
+    def run(self, nom_compte):
         def _cb(msgtype:str, value:Any):
             self.putgui(msgtype, value) # type: ignore
         def _tr(msg:str):
             _cb("log", msg+'\n')
-         
+
         # _tr("Attente du choix du compte...")
         self.oHTML.waitForRelevé()
-
-        acctNo = self.oHTML.getAcctNo()
-        _cb("!N° compte", acctNo)
+        _cb("!N° compte", self.oHTML.getAcctNo())
 
         # Ouverture Excel
         # _tr("Ouverture classeur Excel")
         clsExcel = self.context['Excel']
         if not (isclass(clsExcel) and issubclass(clsExcel, Excel)):
                raise TypeError("La classe Excel fournie n'est pas un sous-type de Excel")
-        self.oXL = clsExcel(acctNo)
+        self.oXL = clsExcel(nom_compte)
+        newAccount = self.oXL.newAccount
         # _tr("Classeur Excel ouvert")
         _cb("XL_pos", self.oXL.hwnd)   # pour que la présentation positionne la fenêtre Excel
         self.oXL.setVisible(True)
@@ -85,7 +85,7 @@ class TrtCompte():
         #self.oHTML.quit()
 
         # Vérifier l’historique
-        if self.oXL.status != Excel.NEW and ope.isEOF():
+        if not newAccount and ope.isEOF():
             raise ValueError(
                 "Le relevé HTML ne contient pas assez d'historique pour remplir le fichier Excel."
             )
@@ -97,12 +97,7 @@ class TrtCompte():
             self.oXL.StoreOpe(ope)
             tot_ope += Decimal(ope.montant)
 
-        # Solde initial + sauvegarde
-        if self.oXL.status == Excel.NEW:
-            self.oXL.solde_initial = soldeHTML - tot_ope - tot_excl
-            self.oXL.saveWorkBook()
-
-        # On ne sauvgarde pas les éventuelles modifications aux fichiers existants
+       # On ne sauvgarde pas les éventuelles modifications aux fichiers existants
 
         _tr(
             f"Solde: {locale.currency(soldeHTML, grouping=True, symbol=True)}\n"

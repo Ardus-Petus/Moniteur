@@ -24,12 +24,10 @@ class ExtractionMetier(AppMetier):
         def nettoyage():
             if self.oHTML:
                 self.oHTML.quit()
-            try: 
-                ewm = ExcelWindowManager()
-                ewm.appli.ActiveWorkbook.Worksheets(3).Activate()
-                ewm.cascade()
-            except: 
-                pass
+            try: ExcelWindowManager().appli.ActiveWorkbook.Worksheets(3).Activate()
+            except: pass
+
+            
         context['nettoyage'] = nettoyage
         
     def run(self):
@@ -56,22 +54,25 @@ class ExtractionMetier(AppMetier):
         _tr("Attente de la connexion au site...")
         self.oHTML.waitForCnxComptes()
         #Pour passer de la page afficheSynthèse à la page du relevé du CCP
-        releveCCP=chrome.findElement('h3.title>a').get_attribute('href') # URL du relevé du CCP (on y revient à chaque itération)
+        releveCCP=chrome.findElement('h3.title>a').get_attribute('href') 
         dejavu = []
 
         while True:
-            chrome.get(releveCCP)           # Accès à la page du relevé du CCP (on y revient à chaque itération)
+            chrome.get(releveCCP)     # Accès à la page du relevé du CCP qui contient le tableau des comptes
             options = chrome.findElements('select#liste-comptes>option')
             comptes = {i.text:i for i in options}
             if len(dejavu) == len(comptes):
-                break
-            nom_compte = self.getgui('popup', comptes.keys(), 999999)   # Lecture du compte choisi par l'utilisateur
-            if nom_compte == '__fermer__':
-                break
+                break  
+            for nom_compte in comptes:
+                if nom_compte not in dejavu:
+                    break           # On sort du for
+            else:
+                break  # On sort du while
+
             dejavu.append(nom_compte)   
-            chrome.execute_script("arguments[0].setAttribute('selected', 'true')", comptes[nom_compte])
+            chrome.execute_script("el => el.setAttribute('selected', 'true')", comptes[nom_compte])
             bouton_consulter=chrome.findElement('button[aria-label="Consulter le compte"]')
-            bouton_consulter.click()    # Envoie sur la page du relevé du compte désigné par nom_compte
+            bouton_consulter.click()        # Envoie sur la page du relevé du compte désigné par nom_compte
             compte = TrtCompte(self.context, self.oHTML)
             compte.run( nom_compte)
 

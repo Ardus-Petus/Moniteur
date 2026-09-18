@@ -30,22 +30,34 @@ class CSV_LBP(HTML):
         """Attend que la page Relevé soit chargée."""
         self.waitFor(self.CNXRELEVE, self.DELAY)
 
+        page_releve = self.chrome.getCurrentUrl()
+
         # Accès au lien de téléchargement du relevé
         bouton_download = self.chrome.findElement('a[title^="Télécharger"]')
         href = bouton_download.get_attribute('href')
-        self.chrome.new_window()       
         self.chrome.get(href) # Simule un clic sur bouton_download
         bouton_download_ops = self.findElement('button[aria-label^="Télécharger"]')
-        self.chrome.execute_script('(arg) => arg.click()', bouton_download_ops)
         # time.sleep(1)  # Attendre un peu pour s'assurer que le téléchargement a commencé
         # Attendre que le téléchargement soit terminé
-        download = self.chrome.page.wait_for_event("download")
-        path_csv = r"O:\OneDrive\Téléchargements\Releves\Relevé.csv"     
-        if os.path.exists(path_csv):
-            os.remove(path_csv)
-        download.save_as(path_csv)
-        self.chrome.close_window()
+        
+        rep_csv = r"O:\OneDrive\Téléchargements\Releves"
+        path_csv = os.path.join(rep_csv, "Relevé.csv")     
+        for f in os.listdir(rep_csv):
+            os.remove(os.path.join(rep_csv, f))
 
+        self.chrome.execute_script('arguments[0].click()', bouton_download_ops)
+
+        if hasattr(self.chrome, 'page'):
+            download = self.chrome.page.wait_for_event("download")
+            if os.path.exists(path_csv):
+                os.remove(path_csv)
+            download.save_as(path_csv)
+        else:
+            time.sleep(0.4)
+            for f in os.listdir(rep_csv):
+                if f.endswith('.csv'):
+                    os.rename(os.path.join(rep_csv, f), os.path.join(rep_csv, "Relevé.csv"))
+        self.chrome.get(page_releve)
         #  Ouverture du fichier csv
         csvfile = open(path_csv, 'r')
         reader = csv.reader(csvfile, delimiter=';')
@@ -54,7 +66,6 @@ class CSV_LBP(HTML):
         csvfile.close()
         #os.remove(path_csv)
 
-       
     def getAcctNo(self) -> str:
         """Retourne le numéro de compte.""" 
                

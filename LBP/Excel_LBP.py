@@ -16,8 +16,8 @@ class Excel_LBP(Excel):
         """
         super().__init__(
             acct, 
-            worksheetname='banque', 
-            rep='o:\\onedrive\\perso\\', 
+            worksheetname='Modèle', 
+            rep='o:\\onedrive\\perso\\Relevés\\', 
             modelpath=os.path.join(os.path.dirname(__file__),"modbanque.xltx")
         )
 

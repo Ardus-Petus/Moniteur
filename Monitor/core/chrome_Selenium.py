@@ -31,16 +31,18 @@ class ChromeDriver(Chrome):
 
     # --- API exposée à tes applis ---
     def findElement(self, selector, base=None):
+        by = By.XPATH if selector.startswith("//") or selector.startswith(".//") else By.CSS_SELECTOR
         b = self.driver if base is None else base
         try:
-            return b.find_element(By.XPATH, selector)
+            return b.find_element(by, selector)
         except Exception as e:
             return None
 
     def findElements(self, selector, base=None):
+        by = By.XPATH if selector.startswith("//") or selector.startswith(".//") else By.CSS_SELECTOR
         b = self.driver if base is None else base
         try:
-            return b.find_elements(By.XPATH, selector)
+            return b.find_elements(by, selector)
         except Exception as e:
             return []
 
@@ -52,6 +54,9 @@ class ChromeDriver(Chrome):
 
     def get(self, url: str):
         self.driver.get(url)
+
+    def getCurrentUrl(self) -> str:
+        return self.driver.current_url
 
     def waitFor(self, url: str, delay: int):
         WebDriverWait(self.driver, delay).until(EC.url_matches(url))

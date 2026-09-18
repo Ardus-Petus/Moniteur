@@ -6,7 +6,7 @@ from Monitor.utils.ExcelWindowManager import ExcelWindowManager
 from Banque.core.Ope import Ope
 from abc import ABC, abstractmethod
 from decimal import Decimal
-
+import re
 class TablibError(Exception):
     pass
 
@@ -17,19 +17,14 @@ class Excel(ABC):
     EXIST, OPEN, NEW = range(3)
 
     def __init__(self, acct:str, rep:str='', worksheetname:str='', modelpath:str=''):
-        """Initialise l'objet COM Excel et affiche le classeur pour un compte donné.
-        Args:
-            acct (str): Le nom du compte bancaire.
-            rep (str): Le répertoire où se trouve le fichier Excel.
-            worksheetname (str): Le nom de la feuille de calcul à utiliser.
-          
-              modelpath (str): Le chemin vers le modèle Excel à utiliser pour créer un nouveau classeur."""
         self.Appli: win32.CDispatch | None = None   # L'application Excel
-        
         self.WorkBook: win32.CDispatch | None = None      # Le classeur Excel
         self.WorkSheet: win32.CDispatch | None = None      # La feuille de calcul Excel
 
-        WorkBookname = acct + '.xlsx'             # Nom du classeur Excel pour le compte
+        match = re.search(r"(.*) N° (\S+) (.*)", acct)
+        type_compte, numero, titulaire = match.groups()
+
+        WorkBookname = titulaire + '.xlsx'             # Nom du classeur Excel pour le compte
         self.nomfic = rep + WorkBookname          # Chemin complet du fichier Excel pour le compte
  
         self.mgr = ExcelWindowManager()     # Active ou crée une instance d'Excel
@@ -37,7 +32,7 @@ class Excel(ABC):
 
         self.Appli = self.mgr.appli           # On récupère l'instance Excel 
                 
-        self.Appli.Visible = False
+        self.Appli.Visible = True
         self.Appli.FeatureInstall = 0  # Empêche Excel de chercher des fonctionnalités manquantes sur le réseau     
         #self.Appli.WindowState = -4140      # xlMinimized
 
@@ -46,7 +41,6 @@ class Excel(ABC):
         WorkBooks = self.Appli.Workbooks
         openWorkBooks= [w.Name for w in WorkBooks]
         if WorkBookname in openWorkBooks:
-                                                    # Récupère le classeur déjà ouvert
             self.WorkBook = WorkBooks[WorkBookname]
             self.status = Excel.EXIST
         else:
@@ -56,22 +50,33 @@ class Excel(ABC):
                 self.status = Excel.OPEN
             else:
                 self.WorkBook = self.Appli.Workbooks.Add(modelpath)  # Crée un nouveau classeur à partir du modèle
+                self.WorkBook.SaveAs(self.nomfic)  # Enregistre le nouveau classeur sous le nom de fichier spécifié
                 self.status = Excel.NEW
-
-        # self.WorkBook.windows(1).WindowState = -4140  # xlMinimized
-
-        # On active le classeur et on récupère le handle de la fenêtre Excel
         assert self.WorkBook is not None
-        #self.WorkBook.Activate()
-        # self.hwnd = find_hwnd_by_workbook_name(WorkBookname)  
+        self.hwnd = self.Appli.Hwnd
 
-        # On récupère le hwnd à partir de la collection Windows du classeur
-        # (on considère qu'il n'y a qu'une fenêtre)
-        self.hwnd = self.mgr.hwnd = self.WorkBook.Windows[1].Hwnd
+        # On récupère la feuille de calcul du classeur
+        sheets= self.WorkBook.Worksheets
+        wsModèle = self.WorkBook.Worksheets(worksheetname)
+        for ws in self.WorkBook.Worksheets:
+            if ws.Name == type_compte:
+                self.WorkSheet = ws
+                self.newAccount = False
+                break
+        else:
+            wsModèle.Copy(After=self.WorkBook.Worksheets(sheets.Count))
+            self.Appli.ActiveSheet.Name = type_compte
+            self.WorkSheet = self.Appli.ActiveSheet
+            lo = self.WorkSheet.ListObjects.Add(
+                SourceType=1,  # xlSrcRange
+                Source= self.WorkSheet.UsedRange,
+                XlListObjectHasHeaders=True  # Plage de données actuelle
+            )
+            lo.Name = type_compte  # Renomme le tableau de la nouvelle feuille
+            self.newAccount = True  
 
+        self.WorkSheet.Activate()  # Active la feuille de calcul pour la rendre visible
 
-        # On récupère la feuille de calcul "Banque" du classeur
-        self.WorkSheet = self.WorkBook.Worksheets(worksheetname)
 
         # Si le tableau est filtré, on affiche toutes les données 
         # pour éviter les problèmes d'ajout de ligne
@@ -84,14 +89,16 @@ class Excel(ABC):
 
         # On charge le fichier tablib pour le compte
         try:
-            with open(rep + acct + '.tablib', mode='r') as file:
+            with open(rep + numero + '.tablib', mode='r') as file:
                 self.tablib = json.loads(file.read())
         except FileNotFoundError:
             self.tablib: list[list[str]]= []
 
         
         # Finalement, on retourne l'objet Excel initialisé
-        # self.Appli.Visible = True
+        # 
+        # 
+        self.Appli.Visible = True
         # self.Appli.DisplayAlerts = True
         self.Appli.WindowState = -4143  # xlNormal
 

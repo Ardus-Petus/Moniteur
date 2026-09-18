@@ -134,13 +134,7 @@ class gui(guiBase):
         # Création de la fenêtre secondaire
         popup = tk.Toplevel(self.root)
         popup.attributes('-topmost', True)
-        popup.title("choix du compte")
-        X = self.root.winfo_screenwidth()
-        Y = self.root.winfo_screenheight()
-        x = (X//2) + 100
-        y = (Y//2) 
-        popup.geometry(f"+{x}+{y}")
-        
+      
         # Rendre la popup modale (optionnel : empêche d'interagir avec la fenêtre principale)
         popup.grab_set() 
         
@@ -155,6 +149,16 @@ class gui(guiBase):
         bouton_fermer = tk.Button(popup, text="Fermer", command=lambda : valid(None))
 
         bouton_fermer.pack(padx=5, pady=5)
+        popup.title("choix du compte")
+        popup.update_idletasks()  # Met à jour les dimensions de la fenêtre avant de calculer la position
+        X = self.root.winfo_screenwidth()
+        Y = self.root.winfo_screenheight()
+        w = popup.winfo_width()
+        h = popup.winfo_height()
+        x = X//2 + ((X//2 - w) // 2)
+        y = (Y-h) // 2         # Au milieu de la moitié droite de l'écran
+        popup.geometry(f"+{x}+{y}")
+  
         def valid(button):
             if button is None:
                 result = '__fermer__'
