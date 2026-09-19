@@ -32,7 +32,7 @@ class Excel(ABC):
 
         self.Appli = self.mgr.appli           # On récupère l'instance Excel 
                 
-        self.Appli.Visible = True
+        self.Appli.Visible = False
         self.Appli.FeatureInstall = 0  # Empêche Excel de chercher des fonctionnalités manquantes sur le réseau     
         #self.Appli.WindowState = -4140      # xlMinimized
 

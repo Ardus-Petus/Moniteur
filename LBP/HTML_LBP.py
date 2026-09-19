@@ -3,6 +3,7 @@ from Banque.core.HTML import HTML
 from Banque.core.Ope import Ope
 import datetime
 import time
+from typing import Any
 
 import re
 
@@ -58,10 +59,10 @@ class HTML_LBP(HTML):
             i (int): L'index dans le tableau self.rows de l'opération à récupérer."""
 
         # Fonction interne pour traiter une ligne du tableau self.rows
-        def _extraire_ope(row: WebElement) -> Ope:             
+        def _extraire_ope(row: Any) -> Ope:             
             """Prend une ligne de tableau HTML self.rowset retourne un objet Ope pur.
             Args:
-                row: Un élément WebElement représentant une ligne de tableau HTML."""
+                row: Un élément WebElement ou locator représentant une ligne de tableau HTML."""
             cells =self.chrome.findCells(row)  # Récupère les cellules de la ligne
 
             # Il arrive épisodiquement que le texte soit précédé d'un intitulé préfixe

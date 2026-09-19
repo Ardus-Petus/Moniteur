@@ -1,7 +1,7 @@
 # extraction_metier.py
-from decimal import Decimal
 import locale
 from typing import Type, Any, Callable
+import Monitor.utils.winmgt as winmgt
 from Banque.core.Excel import Excel
 from Banque.core.HTML import HTML
 from Banque.core.TrtCompte import TrtCompte
@@ -55,6 +55,8 @@ class ExtractionMetier(AppMetier):
         # Attente connexion + relevé
         _tr("Attente de la connexion au site...")
         self.oHTML.waitForCnxComptes()
+        winmgt.minimize(self.oHTML.hwnd)
+
         #Pour passer de la page afficheSynthèse à la page du relevé du CCP
         releveCCP=chrome.findElement('h3.title>a').get_attribute('href') # URL du relevé du CCP (on y revient à chaque itération)
         dejavu = []

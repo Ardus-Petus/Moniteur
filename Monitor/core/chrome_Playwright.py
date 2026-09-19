@@ -140,7 +140,7 @@ class ChromeDriver(Chrome):   # ← ta classe parente
             selector = f"xpath={selector}"
 
         # Base = page ou locator
-        root = self.page if base is None else base.locator
+        root = self.page if base is None else base._loc
 
         # Récupération SANS scroll
         handles = root.locator(selector).element_handles()

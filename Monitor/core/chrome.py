@@ -1,13 +1,8 @@
 import subprocess
 import time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support import expected_conditions as EC
 from Monitor.utils.getChromeHwnd import get_stable_chrome_hwnd
-
-from webdriver_manager.chrome import ChromeDriverManager
-import urllib3
+import os
+from typing import Any, Callable
 
 
 CHROMEPROFILE = 'O:\\selenium\\chromeprofile'
@@ -18,7 +13,15 @@ class Chrome:
     def __init__(self, url: str):
         port = 9222
 
-        # 1. Lancer Chrome manuellement avec profil + remote debugging
+       # === 1. FORCE LA RÉINITIALISATION DU FLAG DE CRASH ===
+        prefs_path = os.path.join(CHROMEPROFILE, 'Default', 'Preferences')
+        if os.path.exists(prefs_path):
+            def mod_profile(data: dict[str, Any]) -> None:
+                data['profile']['exit_type'] = "Normal"
+                data['profile']['exited_cleanly'] = True
+            mod_json_file(prefs_path, mod_profile)       
+
+         # 1. Lancer Chrome manuellement avec profil + remote debugging
         args = [
             CHROMEEXE,
             f"--remote-debugging-port={port}",
@@ -52,4 +55,17 @@ class Chrome:
         else:
             raise RuntimeError("Chrome n'a pas ouvert le port CDP")
         self.hwnd = get_stable_chrome_hwnd(self.proc.pid)
-    
+
+def __del__(self):
+        if hasattr(self, 'proc'):
+            subprocess.run(["taskkill", "/PID", str(self.proc.pid), "/T", "/F"])
+
+def mod_json_file(prefs_path: str, callback: Callable[[dict[str, str]], None]) -> None:
+    import json
+    with open(prefs_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+        callback(data)
+    with open(prefs_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f)
+
+

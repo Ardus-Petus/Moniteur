@@ -110,6 +110,9 @@ class gui(guiBase):
     #     self.changer_background('lightgrey')
     #     self.responseform = form 
 
+    def traiter_stop(self, msg_type, payload):
+        self.root.quit()
+
     def traiter_log(self, msg_type, payload):
         self.log.insert("end", payload)# type: ignore
         self.log.see("end") # type: ignore
