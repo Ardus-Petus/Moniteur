@@ -1,5 +1,4 @@
-from selenium.webdriver.remote.webelement import WebElement
-from Banque.core.HTML import HTML
+from LBP.HTML_LBP import HTML_LBP 
 from Banque.core.Ope import Ope
 import datetime
 import time
@@ -7,77 +6,36 @@ import os
 import re
 import csv
 
-class CSV_LBP(HTML):
-    """Classe pour gérer les opérations bancaires dans un site WEB spécifique à La Banque Postale."""
-    DELAY = 180  # 3 minutes   
-    CNXRELEVE = "releve_ccp.ea|releve_cne.ea"
-    CNXCOMPTE = "afficheSyntheseCCP-synthese_ccp.ea"
-    URL = 'https://www.labanquepostale.fr/particulier/connexion-espace-client.html'
-
-    
-    def __init__(self):
-        """Initialise l'objet HTML et démarre le navigateur Chrome avec Selenium.
-           accède à la page de connexion à l'espace client de La Banque Postale
-        """
-        super().__init__(self.URL)
-        
-
-    def waitForCnxComptes(self) -> None:
-        """Attend que la page Comptes et Contrats soit chargée."""
-        self.waitFor(self.CNXCOMPTE, self.DELAY)
+class CSV_LBP(HTML_LBP):
+    """Classe pour gérer les opérations bancaires avec téléchargement CSV spécifique à La Banque Postale."""
+ 
     
     def waitForRelevé(self) -> None:                        # Initialise le tableau self.rows avec la liste des opérations,
-        """Attend que la page Relevé soit chargée."""
+        # Cette méthode remplace la méthode waitForRelevé de la classe parente HTML_LBP
+        # pour gérer le téléchargement du relevé au format CSV  
+        # et initialiser le tableau self.rows avec la liste des opérations
         self.waitFor(self.CNXRELEVE, self.DELAY)
-
-        page_releve = self.chrome.getCurrentUrl()
+        time.sleep(0.5)  # Attendre un court instant pour s'assurer que la page est complètement chargée
+        page_releve = self.chrome.current_url
 
         # Accès au lien de téléchargement du relevé
-        bouton_download = self.chrome.findElement('a[title^="Télécharger"]')
+        bouton_download = self.findElement('a[title^="Télécharger"]')
         href = bouton_download.get_attribute('href')
         self.chrome.get(href) # Simule un clic sur bouton_download
         bouton_download_ops = self.findElement('button[aria-label^="Télécharger"]')
-        # time.sleep(1)  # Attendre un peu pour s'assurer que le téléchargement a commencé
-        # Attendre que le téléchargement soit terminé
-        
-        rep_csv = r"O:\OneDrive\Téléchargements\Releves"
-        path_csv = os.path.join(rep_csv, "Relevé.csv")     
-        for f in os.listdir(rep_csv):
-            os.remove(os.path.join(rep_csv, f))
+       
+        file = self.download(bouton_download_ops)
 
-        self.chrome.execute_script('arguments[0].click()', bouton_download_ops)
-
-        if hasattr(self.chrome, 'page'):
-            download = self.chrome.page.wait_for_event("download")
-            if os.path.exists(path_csv):
-                os.remove(path_csv)
-            download.save_as(path_csv)
-        else:
-            time.sleep(0.4)
-            for f in os.listdir(rep_csv):
-                if f.endswith('.csv'):
-                    os.rename(os.path.join(rep_csv, f), os.path.join(rep_csv, "Relevé.csv"))
-        self.chrome.get(page_releve)
         #  Ouverture du fichier csv
-        csvfile = open(path_csv, 'r')
+        csvfile = open(file, 'r')
         reader = csv.reader(csvfile, delimiter=';')
         # Chargement des lignes du tableau [[date, lib, montant]]
         self.rows = list(reader)[7:] #On exclut les 7 premières lignes (en-têtes)
         csvfile.close()
         #os.remove(path_csv)
+        
+        self.get(page_releve)
 
-    def getAcctNo(self) -> str:
-        """Retourne le numéro de compte.""" 
-               
-        elem = self.findElement('//h2[@class="fake-ttl-1"]')
-        return elem.text.split('\n')[0][-11:]
-    
-    def getSolde(self) -> float:
-        """Retourne le solde du compte."""
-        t = self.findElement('//p[@class="infos-cpt"]//span[contains(@class,"amount")]').text
-        n = re.sub('[ \u00a0€]', '', t).replace(',', '.').replace('\u2212', '-')
-        return float(n)
-    
     def getHTMLOpe(self, i: int) -> Ope:
         """Retourne l'opération à l'index i, renvoie EOF si l'index est hors du tableau.
         Args:
@@ -103,13 +61,13 @@ class CSV_LBP(HTML):
         else:
             return Ope.EOF()
 
-class CSV:
-    def __init__(self, path_csv: str):
-        self.path_csv = path_csv
-        self.rows = []
-        csvfile = open(path_csv, 'r')
-        reader = csv.reader(csvfile, delimiter=';')
-        self.rows = list(reader)[8:]
-        csvfile.close()
-        pass
+# class CSV:
+#     def __init__(self, path_csv: str):
+#         self.path_csv = path_csv
+#         self.rows = []
+#         csvfile = open(path_csv, 'r')
+#         reader = csv.reader(csvfile, delimiter=';')
+#         self.rows = list(reader)[8:]
+#         csvfile.close()
+#         pass
 

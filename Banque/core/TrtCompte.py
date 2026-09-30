@@ -24,10 +24,11 @@ class TrtCompte():
         # _tr("Attente du choix du compte...")
         self.oHTML.waitForRelevé()
         _cb("!N° compte", self.oHTML.getAcctNo())
+        _tr(f"Compte: {nom_compte}")
 
         # Ouverture Excel
         # _tr("Ouverture classeur Excel")
-        clsExcel = self.context['Excel']
+        clsExcel = self.context['Destination']
         if not (isclass(clsExcel) and issubclass(clsExcel, Excel)):
                raise TypeError("La classe Excel fournie n'est pas un sous-type de Excel")
         self.oXL = clsExcel(nom_compte)
@@ -45,6 +46,8 @@ class TrtCompte():
             raise ValueError("La dernière ligne du tableau Excel n\'est pas une écriture")
         _tr(f"Dern.opé: {lastope}")
         _cb("!Dernière", lastope)
+
+        self.oXL.setVisibleRow(10)
 
         idxHTML = 0
         tot_excl = Decimal(0)

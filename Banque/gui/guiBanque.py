@@ -149,8 +149,10 @@ class gui(guiBase):
             if lib in self.dejavu:
                 button.configure(state=tk.DISABLED)
 
-        bouton_fermer = tk.Button(popup, text="Fermer", command=lambda : valid(None))
 
+        bouton_tout = tk.Button(popup, text="Tout traiter", command=lambda : valid('__tout__'))
+        bouton_fermer = tk.Button(popup, text="Fermer", command=lambda : valid(None))
+        bouton_tout.pack(padx=5, pady=5)                                                                                                                        
         bouton_fermer.pack(padx=5, pady=5)
         popup.title("choix du compte")
         popup.update_idletasks()  # Met à jour les dimensions de la fenêtre avant de calculer la position
@@ -165,6 +167,8 @@ class gui(guiBase):
         def valid(button):
             if button is None:
                 result = '__fermer__'
+            elif button == '__tout__':
+                result = '__tout__'
             else:
                 result = button["text"]
                 self.dejavu.append(result)

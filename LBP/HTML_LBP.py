@@ -16,41 +16,63 @@ class HTML_LBP(HTML):
     URL = 'https://www.labanquepostale.fr/particulier/connexion-espace-client.html'
 
     
-    def __init__(self):
+    def __init__(self, driver):
         """Initialise l'objet HTML et démarre le navigateur Chrome avec Selenium.
            accède à la page de connexion à l'espace client de La Banque Postale
         """
-        super().__init__(self.URL)
+        super().__init__(self.URL, driver)
         
+    def get_liste_comptes(self) -> list[str]:
+        self.get(self.url_page_liste_comptes)
+        # Retourne la liste des comptes disponibles
+        options = self.findElements('select#liste-comptes>option') #liste des options du select>option
+        self.dict_comptes = {i.text:i for i in options}   # on mémorise dans un dictionnaire les comptes disponibles
+        return self.dict_comptes.keys()                                         # clé = nom du compte, valeur = élément option correspondant
 
+    def charger_page_releve(self, compte) -> None:
+        assert self.chrome.current_url == self.url_page_liste_comptes, "La page des comptes n'est pas chargée"
+        # on positionne l'attribut 'selected=True' sur l'option correspondant au compte choisi
+        elem = self.dict_comptes[compte]
+        if hasattr(elem, '_el'):
+            elem = elem._el
+        self.execute_script("arguments[0].setAttribute('selected', 'true')", elem)
+        # On clique sur le bouton "Consulter le compte" pour accéder au relevé du compte choisi
+        bouton_consulter=self.findElement('button[aria-label="Consulter le compte"]')
+        # self.execute_script('arguments[0].click()', bouton_consulter) 
+        bouton_consulter.click() 
+        pass
+
+                 
     def waitForCnxComptes(self) -> None:
         """Attend que la page Comptes et Contrats soit chargée."""
         self.waitFor(self.CNXCOMPTE, self.DELAY)
+        self.url_page_liste_comptes = self.findElement('h3.title>a').get_attribute('href')
     
-    def waitForRelevé(self) -> None:                        # Initialise le tableau self.rows avec la liste des opérations,
-        """Attend que la page Relevé soit chargée."""
+    def waitForRelevé(self) -> None:                        
+        # Attend que la page Relevé soit chargée.
+        # Initialise le tableau self.rows avec la liste des opérations,
         self.waitFor(self.CNXRELEVE, self.DELAY)
         try:
             # On clique sur le bouton "Voir l'historique" s'il est présent
-            button = self.findElement("//a[@id='voirHisto']")
+            button = self.findElement("a#voirHisto")
             button.click()
             time.sleep(1) # Petit temps d'attente pour le déploiement du tableau
         except:
             pass
 
         # Chargement des lignes du tableau
-        self.rows = self.findElements('//table[@id="mouvementsTable"]/tbody/tr')
+        self.rows = self.findElements('table#mouvementsTable>tbody>tr')
 
     def getAcctNo(self) -> str:
         """Retourne le numéro de compte.""" 
                
-        elem = self.findElement('//h2[@class="fake-ttl-1"]')
+        elem = self.findElement('h2.fake-ttl-1')
         return elem.text.split('\n')[0][-11:]
     
     def getSolde(self) -> float:
         """Retourne le solde du compte."""
-        t = self.findElement('//p[@class="infos-cpt"]//span[contains(@class,"amount")]').text
-        n = re.sub('[ \u00a0€]', '', t).replace(',', '.').replace('\u2212', '-')
+        solde = self.findElement('p.infos-cpt span.amount').text
+        n = re.sub('[ \u00a0€]', '', solde).replace(',', '.').replace('\u2212', '-')
         return float(n)
     
     def getHTMLOpe(self, i: int) -> Ope:
@@ -63,7 +85,7 @@ class HTML_LBP(HTML):
             """Prend une ligne de tableau HTML self.rowset retourne un objet Ope pur.
             Args:
                 row: Un élément WebElement ou locator représentant une ligne de tableau HTML."""
-            cells =self.chrome.findCells(row)  # Récupère les cellules de la ligne
+            cells =self.findCells(row)  # Récupère les cellules de la ligne
 
             # Il arrive épisodiquement que le texte soit précédé d'un intitulé préfixe
             # Fonction interne pour récupérer la valeur d'une cellule et retirer le préfixe str si présent

@@ -32,9 +32,9 @@ class Excel(ABC):
 
         self.Appli = self.mgr.appli           # On récupère l'instance Excel 
                 
-        self.Appli.Visible = False
+        #self.Appli.Visible = False
         self.Appli.FeatureInstall = 0  # Empêche Excel de chercher des fonctionnalités manquantes sur le réseau     
-        #self.Appli.WindowState = -4140      # xlMinimized
+        self.Appli.WindowState = -4140      # xlMinimized
 
         # On récupère la liste des classeurs ouverts 
         # et on vérifie si le classeur pour le compte existe déjà
@@ -57,14 +57,14 @@ class Excel(ABC):
 
         # On récupère la feuille de calcul du classeur
         sheets= self.WorkBook.Worksheets
-        wsModèle = self.WorkBook.Worksheets(worksheetname)
-        for ws in self.WorkBook.Worksheets:
+        wsModèle = sheets(worksheetname)
+        for ws in sheets:
             if ws.Name == type_compte:
                 self.WorkSheet = ws
                 self.newAccount = False
                 break
         else:
-            wsModèle.Copy(After=self.WorkBook.Worksheets(sheets.Count))
+            wsModèle.Copy(After=sheets(sheets.Count))
             self.Appli.ActiveSheet.Name = type_compte
             self.WorkSheet = self.Appli.ActiveSheet
             lo = self.WorkSheet.ListObjects.Add(

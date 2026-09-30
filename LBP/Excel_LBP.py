@@ -28,7 +28,7 @@ class Excel_LBP(Excel):
     def StoreOpe(self, ope:Ope) -> None:
         """Enregistre une opération à la fin du tableau Excel."""    
         rowRng = self.addRow()                  # Renvoie le Range d'une nouvelle ligne ajoutée au tableau
-        self.Appli.Goto(rowRng.Cells(1, 1))     # type: ignore # Se positionne sur la nouvelle ligne pour la rendre visible
+        self.Appli.Goto(rowRng.Cells(1, 1))     # type: itgnore # Se positionne sur la nouvelle ligne pour la rendre visible
         rowRng.Columns("A").Value = rowRng.Row
         rowRng.Columns("B").Value = ope.date.toordinal() - 693594  # Conversion de la date en format Excel
         rowRng.Columns("C").Value = ope.lib

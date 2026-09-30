@@ -1,6 +1,6 @@
 # extraction_metier.py
 from Monitor.core.AppMetier import AppMetier
-from Monitor.core.chrome_Playwright import ChromeDriver
+from Monitor.core.chrome_Protocol import ChromeProtocol
 from Monitor.utils.Parser import Parser            
 from collections import defaultdict
 import re
@@ -18,6 +18,7 @@ class ExtractionMetier(AppMetier):
     def __init__(self, context):
         super().__init__(context)
         self.oHTML = None
+        self.ChromeDriver = context['Driver']
 
     def run(self):
         getgui = self.getgui        
@@ -29,13 +30,13 @@ class ExtractionMetier(AppMetier):
             _send("log", msg+'\n')
 
         # Définition de la procédure de nettoyage
-        def nettoyage():
-            if self.oHTML:
-                self.oHTML.proc.terminate()
-        self.context['nettoyage'] = nettoyage
+        # def nettoyage():
+        #     if self.oHTML:
+        #         self.oHTML.proc.terminate()
+        # self.context['nettoyage'] = nettoyage
             
         # Ouverture HTML
-        self.oHTML = ChromeDriver(ROOT+'/info/accueil.html')
+        self.oHTML: ChromeProtocol = self.ChromeDriver(ROOT+'/info/accueil.html')
        
         # Raccourcis pour les méthodes de recherche d'éléments HTML
         
@@ -47,10 +48,10 @@ class ExtractionMetier(AppMetier):
         _trace("Connexion au site...")
 
         # On ouvre le menu hamb
-        but = parser.getElementById('button', 'menuhamb')
-        self.oHTML.execute_script("arguments[0].click();", but)
+        but = parser.getElement('button#menuhamb')
+        but.click()
         time.sleep(0.3)
-        but_cnx = parser.getElementById('a', 'page_se_connecter_link_i3')
+        but_cnx = parser.getElement('a[title="Se connecter"]')
         if but_cnx:
             # Si le bouton "Se connecter" est affiché (on ne peut pas le cliquer)
             href = str(but_cnx.get_attribute('href'))
@@ -60,15 +61,16 @@ class ExtractionMetier(AppMetier):
             time.sleep(0.4)
             # On atteind la page de connexion.
             # Les champs user et password ne sont pas déjà remplis
-            but_accepter_cookies = parser.getElement('//button[@id="footer_tc_privacy_button"]')
+            but_accepter_cookies = parser.getElement('button#footer_tc_privacy_button')
             if but_accepter_cookies:
                 but_accepter_cookies.click()
             # parser.getElementById('input', 'username').send_keys('francoisegoudal')
             # parser.getElementById('input', 'password').send_keys('Grouch337282!')           
-            parser.getElementById('button', 'btn-valider').click()
+            time.sleep(0.3)
+            parser.getElement('button#btn-valider').click()
         else:
             but = parser.getElement('//a[text()="Tableau de bord"]')
-            self.oHTML.execute_script("arguments[0].click();", but)
+            but.click()
         time.sleep(0.5)
 
 
@@ -88,7 +90,8 @@ class ExtractionMetier(AppMetier):
             'prelevements': 'page_empl_prelevements',
             'declarations': 'page_empl_mes_declarations'
         }
-        button = parser.getElementById('a', id[trt])
+        time.sleep(0.3)
+        button = parser.getElement('a#' + id[trt])
         button.click()
         if trt == 'prelevements':
             #--------------------------------------
@@ -97,21 +100,22 @@ class ExtractionMetier(AppMetier):
             time.sleep(0.5)
             _trace("Page prélèvements")    
             result:defaultdict[str, list[tuple]] = defaultdict(list)
-            parser.getElementById('button', 'periodeParDefaut').click()
+            parser.getElement('button#periodeParDefaut').click()
             time.sleep(0.1) # Petit temps d'attente pour le déploiement
-            prélevements = parser.getElements('//div[@id="resultatsAffiches"]/div')
+            prélevements = parser.getElements('div#resultatsAffiches>div')
             for div_prelevement in prélevements[::-1]:
-                date_prelevement = parser.getElement('.//p[@name="date_prelevement"]', div_prelevement).text
+                self.oHTML.execute_script("arguments[0].scrollIntoView(true);", div_prelevement)
+                date_prelevement = parser.getElement('p[name="date_prelevement"]', div_prelevement).text
                 bouton_se_connecter = parser.getElementByClass('button','bouton_recapitulatif', div_prelevement)
                 bouton_se_connecter.click()
                 time.sleep(0.1) # Petit temps d'attente pour le déploiement du tableau
-                avis = parser.getElements('.//div[@class="ligne avis_donnees"]', div_prelevement)
+                avis = parser.getElements('div.ligne.avis_donnees', div_prelevement)
                 for lig in range(0, len(avis)-1, 4):
                     dict = {}
                     for i in range(4):
                         time.sleep(0.1) # Petit temps d'attente
-                        lib = parser.getElementByClass('div', 'bloc_libelle', avis[lig + i]).text[:-2]
-                        val = parser.getElementByClass('div', 'bloc_champs', avis[lig + i]).text
+                        lib = parser.getElement('div.bloc_libelle',avis[lig + i]).text[:-2]
+                        val = parser.getElement('div.bloc_champs', avis[lig + i]).text
                         dict[lib] = val
                     
                     nom = dict['Salarié']
@@ -150,14 +154,14 @@ class ExtractionMetier(AppMetier):
 
             for div_declaration in declarations[::-1]:
                 self.oHTML.execute_script("arguments[0].scrollIntoView(true)", div_declaration)
-                div_button = parser.getElementByClass('button', 'bouton_declaration', div_declaration)
-                div_data = parser.getElement('//div[@name="sansGDA"]', div_declaration)
+                div_button = parser.getElement('button.bouton_declaration', div_declaration)
+                div_data = parser.getElement('div[name="sansGDA"]', div_declaration)
                 #On force l'ouverture du bloc
-                div_accordeon = parser.getElementByClass('div', 'bloc_accordeon', div_declaration)
+                div_accordeon = parser.getElement('div.bloc_accordeon', div_declaration)
                 self.oHTML.execute_script("arguments[0].classList.add('show')", div_accordeon)
                 def getvar(name:str, div):
                     # relatif à div_declaration car certains éléments sont dans button, d'autres dans div_data
-                    return parser.getElement(f'.//span[@name="{name}"]', div).text
+                    return parser.getElement(f'span[name="{name}"]', div).text
                 employe = getvar('nom', div_button)
                 periode = getvar('periode', div_button)
                 nature_act = getvar('nature_activite', div_button)

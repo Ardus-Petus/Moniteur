@@ -7,11 +7,11 @@ from typing import Any, Callable
 
 CHROMEPROFILE = 'O:\\selenium\\chromeprofile'
 CHROMEEXE = r'C:\Program Files\Google\Chrome\Application\chrome.exe'
-
+DOWNLOAD_DIR = 'O:\\Selenium\\Downloads'
+port_num = 9222
 
 class Chrome:
     def __init__(self, url: str):
-        port = 9222
 
        # === 1. FORCE LA RÉINITIALISATION DU FLAG DE CRASH ===
         prefs_path = os.path.join(CHROMEPROFILE, 'Default', 'Preferences')
@@ -19,12 +19,15 @@ class Chrome:
             def mod_profile(data: dict[str, Any]) -> None:
                 data['profile']['exit_type'] = "Normal"
                 data['profile']['exited_cleanly'] = True
+                data['download']['default_directory'] = DOWNLOAD_DIR
+                data['download']['directory_upgrade'] = True
+               
             mod_json_file(prefs_path, mod_profile)       
 
          # 1. Lancer Chrome manuellement avec profil + remote debugging
         args = [
-            CHROMEEXE,
-            f"--remote-debugging-port={port}",
+            CHROMEEXE,  
+            f"--remote-debugging-port={port_num}",
             f"--user-data-dir={CHROMEPROFILE}",
             "--disable-session-crashed-bubble",
             "--no-first-run",
@@ -39,6 +42,7 @@ class Chrome:
         ]
 
         self.proc = subprocess.Popen(args)
+        print(f"Chrome process started with PID {self.proc.pid}")
 
         # 2. Attendre que Chrome ouvre le port CDP
         #    (sinon EPIPE garanti)
@@ -47,7 +51,7 @@ class Chrome:
                 import socket
                 s = socket.socket()
                 s.settimeout(0.1)
-                s.connect(("127.0.0.1", port))
+                s.connect(("127.0.0.1", port_num))
                 s.close()
                 break
             except:
@@ -56,9 +60,10 @@ class Chrome:
             raise RuntimeError("Chrome n'a pas ouvert le port CDP")
         self.hwnd = get_stable_chrome_hwnd(self.proc.pid)
 
-def __del__(self):
-        if hasattr(self, 'proc'):
-            subprocess.run(["taskkill", "/PID", str(self.proc.pid), "/T", "/F"])
+    def __del__(self):
+            if hasattr(self, 'proc'):
+                print(f"Terminating Chrome process with PID {self.proc.pid}")
+                subprocess.run(["taskkill", "/PID", str(self.proc.pid), "/T", "/F"])
 
 def mod_json_file(prefs_path: str, callback: Callable[[dict[str, str]], None]) -> None:
     import json
