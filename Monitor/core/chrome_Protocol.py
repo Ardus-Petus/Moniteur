@@ -1,12 +1,17 @@
 from typing import Protocol, overload, Any, Iterable
 
+
+# ============================================================
+# ILocatorProtocol — unification Selenium + Playwright
+# ============================================================
 class ILocatorProtocol(Protocol):
     driver: Any
-    _loc: Any
+    _loc: Any | None  # Playwright
+    _el: Any | None   # Selenium
 
     @property
     def text(self) -> str: ...
-    def click(self) -> None: ...
+    def click(self) -> Any: ...
     def get_attribute(self, name: str) -> str | None: ...
 
     @property
@@ -23,6 +28,14 @@ class ILocatorProtocol(Protocol):
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterable["ILocatorProtocol"]: ...
 
+
+# Alias pour coller à tes noms de classes
+ILocator = ILocatorProtocol
+
+
+# ============================================================
+# ILocatorListProtocol — liste de ILocator
+# ============================================================
 class ILocatorListProtocol(Protocol):
     @overload
     def __getitem__(self, index: int) -> ILocatorProtocol: ...
@@ -33,16 +46,27 @@ class ILocatorListProtocol(Protocol):
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterable[ILocatorProtocol]: ...
 
+
+ILocatorList = ILocatorListProtocol
+
+
+# ============================================================
+# PageExProtocol — unification Selenium + Playwright
+# ============================================================
 class PageExProtocol(Protocol):
-    _page: Any
+    _page: Any | None
+    _el: Any | None
 
     def locator(self, selector: str, **kwargs) -> Any: ...
-
     def goto(self, url: str) -> None: ...
     def wait_for_url(self, pattern: Any, timeout: int) -> None: ...
 
     def __getattr__(self, name: str) -> Any: ...
 
+
+# ============================================================
+# ChromeProtocol — API unifiée Selenium + Playwright
+# ============================================================
 class ChromeProtocol(Protocol):
     page: PageExProtocol
     context: Any

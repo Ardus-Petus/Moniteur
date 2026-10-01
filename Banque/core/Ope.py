@@ -9,6 +9,10 @@ class Ope:
 
     DATE_EOF = _date(9999, 12, 31)
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Ope):
+            return NotImplemented
+        return self.date == other.date and self.lib.lower() == other.lib.lower() and self.montant == other.montant  
     def __str__(self)->str:
         return f"[{self.date.strftime('%d/%m/%Y')} / {self.lib[:50]:<50} / {self.montant}]"
 
