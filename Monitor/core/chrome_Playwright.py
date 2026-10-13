@@ -29,68 +29,65 @@ class PageEx:
 # ILocator Playwright — API Selenium-like + click() fiable
 # ============================================================
 class ILocator:
-    def __init__(self, driver, locator: Locator):
-        self.driver = driver
-        self._loc = locator
+    def __init__(self, page, locator):
+        self.page = page
+        self.locator = locator
 
+    # --- API Selenium-like ---
     @property
     def text(self):
-        return self._loc.inner_text()
+        return self.locator.inner_text()
 
     def click(self):
-        page = self.driver.page._page
-        # context = self.driver.context
-        # old_pages = context.pages.copy()
-        # old_url = page.url
-
-        # Clic DOM pur
-        page.evaluate("(el) => el.click()", self._loc.element_handle())
-
-        # # 1. Détection popup (nouvelle page)
-        # new_pages = context.pages
-        # if len(new_pages) > len(old_pages):
-        #     popup = new_pages[-1]
-        #     popup.wait_for_load_state()
-        #     return popup.url
-
-        # # 2. Navigation classique
-        # try:
-        #     page.wait_for_load_state("load")
-        # except:
-        #     pass
-
-        # # 3. Navigation SPA / redirection JS
-        # for _ in range(20):
-        #     new_url = page.url
-        #     if new_url != old_url:
-        #         return new_url
-        #     time.sleep(0.05)
-
-        # return page.url
+        # self.locator.click()
+        self.page.execute_script("(el) => el.click()", self)
 
     def get_attribute(self, name):
-        return self._loc.get_attribute(name)
+        return self.locator.get_attribute(name)
 
     @property
     def inner_html(self):
-        return self._loc.inner_html()
+        return self.locator.inner_html()
 
     @property
     def outer_html(self):
-        return self._loc.outer_html()
+        return self.locator.outer_html()
 
+    # --- Recherche relative ---
+    def findElement(self, selector):
+        return ILocator(self.page, self.locator.locator(selector))
+
+    def findElements(self, selector):
+        loc = self.locator.locator(selector)
+        return [ILocator(self.page, l) for l in loc.all()]
+
+    # --- Indexation / itération ---
     def __getitem__(self, index):
-        return ILocator(self.driver, self._loc.nth(index))
+        return ILocator(self.page, self.locator.nth(index))
 
     def __len__(self):
-        return self._loc.count()
+        return self.locator.count()
 
     def __iter__(self):
-        yield from (ILocator(self.driver, l) for l in self._loc.all())
+        return (ILocator(self.page, l) for l in self.locator.all())
 
-    def __getattr__(self, name):
-        return getattr(self._loc, name)
+    # --- clear / send_keys / set_value ---
+    def clear(self):
+        self.locator.fill("")
 
+    def send_keys(self, text):
+        self.locator.type(text)
+
+    def set_value(self, value):
+        try:
+            self.locator.fill(value)
+        except Exception:
+            self.page.execute_script("""
+                el.value = val;
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+            """, val=value)
+
+    
 # ============================================================
 # ChromeDriver Playwright — dérivé de Chrome
 # ============================================================
@@ -114,7 +111,7 @@ class ChromeDriver(Chrome):
     # findElement / findElements
     # ============================================================
     def findElement(self, selector, base=None):
-        root = self.page if base is None else base._loc
+        root = self.page if base is None else base.locator
         if selector.startswith("//") or selector.startswith(".//"):
             selector = f"xpath={selector}"
         loc = root.locator(selector)
@@ -124,7 +121,7 @@ class ChromeDriver(Chrome):
         if selector.startswith("//") or selector.startswith(".//"):
             selector = f"xpath={selector}"
 
-        root = self.page if base is None else base._loc
+        root = self.page if base is None else base.locator
         handles = root.locator(selector).element_handles()
 
         return [
@@ -179,30 +176,63 @@ class ChromeDriver(Chrome):
     # ============================================================
     # execute_script Selenium-like
     # ============================================================
-    def execute_script(self, script: str, *args: Any) -> Any:
+    def execute_script(self, script: str, *args: Any)-> Any:
+        """
+        Exécute un script Selenium-style dans Playwright.
+        - Convertit arguments[n] → argN uniquement si nécessaire
+        - Ne transforme PAS les scripts déjà au format JS Playwright
+        - Convertit ILocator → ElementHandle
+        """
+
+        # ============================================================
+        # 1) Conversion automatique des ILocator → ElementHandle
+        # ============================================================
         fixed_args = []
         for a in args:
-            if hasattr(a, "_loc"):
-                fixed_args.append(a._loc.element_handle())
+            if hasattr(a, "locator"):  # ton wrapper ILocator
+                fixed_args.append(a.locator.element_handle())
             else:
                 fixed_args.append(a)
 
+        # ============================================================
+        # 2) Détection des scripts Selenium (arguments[n])
+        # ============================================================
         pattern = r"arguments\[(\d+)\]"
         matches = list(re.finditer(pattern, script))
 
+        # ------------------------------------------------------------
+        # CAS 1 : script Selenium → conversion obligatoire
+        # ------------------------------------------------------------
         if matches:
             max_index = max(int(m.group(1)) for m in matches)
+
+            if max_index >= len(fixed_args):
+                raise ValueError(
+                    f"execute_script: script demande arguments[{max_index}] "
+                    f"mais seulement {len(fixed_args)} args fournis."
+                )
+
+            # Réécriture arguments[n] → argN
             rewritten = script
             for m in matches:
                 idx = int(m.group(1))
                 rewritten = rewritten.replace(f"arguments[{idx}]", f"arg{idx}")
 
+            # Multi-lignes → bloc { ... }
+            multiline = "\n" in rewritten or ";" in rewritten
             params = ", ".join(f"arg{i}" for i in range(max_index + 1))
-            final_script = f"({params}) => {{ {rewritten} }}"
+
+            if multiline:
+                final_script = f"({params}) => {{ {rewritten} }}"
+            else:
+                final_script = f"({params}) => {rewritten}"
+
             return self.page.evaluate(final_script, *fixed_args)
 
+        # ------------------------------------------------------------
+        # CAS 2 : script déjà au format JS Playwright → PAS de conversion
+        # ------------------------------------------------------------
         return self.page.evaluate(script, *fixed_args)
-
     # ============================================================
     # Téléchargement
     # ============================================================

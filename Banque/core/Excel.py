@@ -64,7 +64,9 @@ class Excel(ABC):
                 self.newAccount = False
                 break
         else:
-            wsModèle.Copy(After=sheets(sheets.Count))
+            wsModèle.Visible = 1
+            wsModèle.Copy(None,sheets(sheets.Count))
+            wsModèle.Visible = 0
             self.Appli.ActiveSheet.Name = type_compte
             self.WorkSheet = self.Appli.ActiveSheet
             lo = self.WorkSheet.ListObjects.Add(

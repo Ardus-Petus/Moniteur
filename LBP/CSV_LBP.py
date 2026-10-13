@@ -14,17 +14,35 @@ class CSV_LBP(HTML_LBP):
         # Cette méthode remplace la méthode waitForRelevé de la classe parente HTML_LBP
         # pour gérer le téléchargement du relevé au format CSV  
         # et initialiser le tableau self.rows avec la liste des opérations
+        # timer.time("Début du waitForRelevé CSV", __name__)
         self.waitFor(self.CNXRELEVE, self.DELAY)
-        time.sleep(0.5)  # Attendre un court instant pour s'assurer que la page est complètement chargée
+        time.sleep(0.3)  # Attendre un court instant pour s'assurer que la page est complètement chargée
+        # timer.time("Page relevé CSV chargée", __name__)
         page_releve = self.chrome.current_url
 
         # Accès au lien de téléchargement du relevé
         bouton_download = self.findElement('a[title^="Télécharger"]')
         href = bouton_download.get_attribute('href')
         self.chrome.get(href) # Simule un clic sur bouton_download
+        titre= self.findElement('h2.txt-highlight').text
+        # Faire apparaitre les champs début et fin
+        perso=self.findElement('input#duree1')
+        perso.click()
+        
+        # Initialisation de la date de début et de fin du relevé
+        input_debut = self.findElement('input#dateDebutPeriode')
+        date_lim = self.findElement('input#nbJourDate').get_attribute('value')
+        if titre.startswith("Compte"):
+            input_debut.set_value(date_lim)  
+        else:
+            input_debut.set_value('01/01/2000')
+        input_fin = self.findElement('input#dateFinPeriode')
+        input_fin.set_value(datetime.datetime.now().strftime('%d/%m/%Y')) 
+        
         bouton_download_ops = self.findElement('button[aria-label^="Télécharger"]')
        
         file = self.download(bouton_download_ops)
+        # timer.time("Fichier CSV téléchargé", __name__)
 
         #  Ouverture du fichier csv
         csvfile = open(file, 'r')
@@ -33,7 +51,7 @@ class CSV_LBP(HTML_LBP):
         self.rows = list(reader)[7:] #On exclut les 7 premières lignes (en-têtes)
         csvfile.close()
         #os.remove(path_csv)
-        
+        # timer.time("Fichier CSV lu et lignes extraites", __name__)
         self.get(page_releve)
 
     def getHTMLOpe(self, i: int) -> Ope:
@@ -70,4 +88,3 @@ class CSV_LBP(HTML_LBP):
 #         self.rows = list(reader)[8:]
 #         csvfile.close()
 #         pass
-

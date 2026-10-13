@@ -90,7 +90,6 @@ class ExtractionMetier(AppMetier):
         }
         time.sleep(0.3)
         button = self.oHTML.findElement('a#' + id[trt])
-        button.click()
         if trt == 'prelevements':
             #--------------------------------------
             # Traitement des prélèvements

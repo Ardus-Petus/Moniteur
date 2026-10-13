@@ -4,7 +4,7 @@ from Banque.core.Ope import Ope
 import datetime
 import time
 from typing import Any
-
+import sys
 import re
 
 
@@ -13,28 +13,38 @@ class HTML_LBP(HTML):
     DELAY = 180  # 3 minutes   
     CNXRELEVE = "releve_ccp.ea|releve_cne.ea"
     CNXCOMPTE = "afficheSyntheseCCP-synthese_ccp.ea"
-    URL = 'https://www.labanquepostale.fr/particulier/connexion-espace-client.html'
+    URL = 'https://voscomptesenligne.labanquepostale.fr/wsost/OstBrokerWeb/loginform?TAM_OP=login&ERROR_CODE=0x00000000&URL=%2Fvoscomptes%2FcanalXHTML%2Fidentif.ea%3Forigin%3Dparticuliers'
 
     
     def __init__(self, driver):
-        """Initialise l'objet HTML et démarre le navigateur Chrome avec Selenium.
-           accède à la page de connexion à l'espace client de La Banque Postale
-        """
         super().__init__(self.URL, driver)
+
+        # Saisie de l'identifiant et du mot de passe, puis validation de la connexion
+        if len(sys.argv) == 3:
+            e_identifiant = self.findElement('input#identifiant')
+            e_identifiant.set_value(sys.argv[1])
+            e_continuer = self.findElement('div#btnContinuer>button')
+            e_continuer.click() 
+            buttons = self.findElements('button.tb-btn-k')
+            for x in sys.argv[2]:
+                for button in buttons:
+                    if button.text == x:
+                        button.click()
+                        time.sleep(0.2)
+                        break
+            self.findElement('button#btnConfirmer').click()
         
     def get_liste_comptes(self) -> list[str]:
         self.get(self.url_page_liste_comptes)
         # Retourne la liste des comptes disponibles
         options = self.findElements('select#liste-comptes>option') #liste des options du select>option
         self.dict_comptes = {i.text:i for i in options}   # on mémorise dans un dictionnaire les comptes disponibles
-        return self.dict_comptes.keys()                                         # clé = nom du compte, valeur = élément option correspondant
+        return self.dict_comptes.keys()                   # clé = nom du compte, valeur = élément option correspondant
 
     def charger_page_releve(self, compte) -> None:
         assert self.chrome.current_url == self.url_page_liste_comptes, "La page des comptes n'est pas chargée"
         # on positionne l'attribut 'selected=True' sur l'option correspondant au compte choisi
         elem = self.dict_comptes[compte]
-        if hasattr(elem, '_el'):
-            elem = elem._el
         self.execute_script("arguments[0].setAttribute('selected', 'true')", elem)
         # On clique sur le bouton "Consulter le compte" pour accéder au relevé du compte choisi
         bouton_consulter=self.findElement('button[aria-label="Consulter le compte"]')
@@ -113,7 +123,4 @@ class HTML_LBP(HTML):
             return _extraire_ope(self.rows[i])
         else:
             return Ope.EOF()
-
-if __name__ == '__main__':
-    obj = HTML_LBP()
 

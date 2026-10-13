@@ -1,4 +1,4 @@
-# extraction_metier.py
+# metier_banque.py
 import locale
 from typing import Type, Any, Callable
 import Monitor.utils.winmgt as winmgt
@@ -17,7 +17,9 @@ class ManqueHistorique(Exception):
 
 class ExtractionMetier(AppMetier):
     def __init__(self, context):
+        # timer.time("Initialisation extraction métier", __name__)
         super().__init__(context)
+        
         self.tout_traiter = context.get('tout_traiter', False)
         self.tabexcl = res.read_text('LBP', 'exclusions.txt')
         self.oHTML:HTML|None = None
@@ -27,13 +29,14 @@ class ExtractionMetier(AppMetier):
                 self.oHTML.quit()
             try: 
                 ewm = ExcelWindowManager()
-                ewm.appli.ActiveWorkbook.Worksheets(3).Activate()
+                ewm.appli.ActiveWorkbook.Worksheets(3).Activate() # Activation de la troisième feuille de calcul : CCP
                 ewm.cascade()
             except: 
                 pass
         context['nettoyage'] = nettoyage
         
     def run(self):
+        # timer.time("Début de la méthode run", __name__)
 
         def _cb(msgtype:str, value:Any):
             self.putgui(msgtype, value) # type: ignore
@@ -52,6 +55,7 @@ class ExtractionMetier(AppMetier):
             raise TypeError("La classe HTML fournie n'est pas un sous-type de HTML")
         clsDriver = self.context['Driver']
         self.oHTML = clsHTML(clsDriver)
+        # timer.time("HTML ouvert et driver initialisé", __name__)
         chrome = self.oHTML.chrome
         # Signaler au GUI que HTML est ouvert (pour positionnements fenêtre)
         _cb("HTML_pos", self.oHTML.hwnd)
@@ -59,7 +63,7 @@ class ExtractionMetier(AppMetier):
         # Attente connexion + relevé
         _tr("Attente de la connexion au site...")
         self.oHTML.waitForCnxComptes()
-
+        # timer.time("Connexion au site et relevé attendus",__name__)
         # Minimiser la fenêtre HTML pour ne pas gêner l'utilisateur
         # qui ne verra que les fenêtres Excel
         winmgt.minimize(self.oHTML.hwnd)
@@ -67,6 +71,8 @@ class ExtractionMetier(AppMetier):
         dejavu = []
 
         while True:
+            _tr("Choix du compte en cours...")
+
             comptes = self.oHTML.get_liste_comptes() # retourne la liste des noms de comptes
             # Si tous les comptes ont l  traités,on sort de la boucle while
             if len(dejavu) == len(comptes):
@@ -86,14 +92,19 @@ class ExtractionMetier(AppMetier):
                     self.tout_traiter = True
                     continue
             # On arrive ici après avoir choisi un compte dans nom_compte (soit par l'utilisateur, soit automatiquement)
-            assert nom_compte is not None, "Aucun compte n'a été sélectionné"   
+            
+            # timer.time(f"Compte sélectionné : {nom_compte}",__name__)
+            _tr(f"Compte sélectionné : {nom_compte}")
+            assert nom_compte is not None, "Aucun compte n'a été sélectionné"
             dejavu.append(nom_compte)                               
             self.oHTML.charger_page_releve(nom_compte)
             pass
 
             # Traitement du compte choisi
+            # timer.time(f"Début du traitement du compte : {nom_compte}",__name__)
             compte = TrtCompte(self.context, self.oHTML)
             compte.run( nom_compte)
+            # timer.time(f"Fin du traitement du compte : {nom_compte}",__name__)
 
         _tr("Fin normale du programme")
         #if self.tout_traiter:
