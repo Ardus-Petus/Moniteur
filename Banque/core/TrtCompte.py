@@ -78,7 +78,7 @@ class TrtCompte():
         # Empiler les opérations HTML jusqu’à lastope ou EOF
         operations:list[Ope] = []
         while not (ope == lastope or ope.isEOF()):
-            timer.time(f"Traitement de l'opération HTML idx={idxHTML}", __name__)
+            # timer.time(f"Traitement de l'opération HTML idx={idxHTML}", __name__)
             _trace_ope(ope)
             operations.append(ope)
             idxHTML += 1
