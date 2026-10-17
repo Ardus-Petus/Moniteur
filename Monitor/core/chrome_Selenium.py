@@ -113,14 +113,11 @@ class ChromeDriver(Chrome):
 
     def findElement(self, selector, base=None):
         root = self.driver if base is None else base._el
-        try:
-            if selector.startswith("//") or selector.startswith(".//"):
-                el = root.find_element(By.XPATH, selector)
-            else:
-                el = root.find_element(By.CSS_SELECTOR, selector)
-            return ILocator(self, el)
-        except:
-            return None
+        if selector.startswith("//") or selector.startswith(".//"):
+            el = root.find_element(By.XPATH, selector)
+        else:
+            el = root.find_element(By.CSS_SELECTOR, selector)
+        return ILocator(self, el)
 
     def findElements(self, selector, base=None):
         root = self.driver if base is None else base._el
@@ -144,8 +141,7 @@ class ChromeDriver(Chrome):
         return self.driver.current_url
 
     def waitFor(self, url: str, delay: int):
-        pattern = re.compile(url)
-        WebDriverWait(self.driver, delay).until(EC.url_matches(pattern))
+        WebDriverWait(self.driver, delay).until(EC.url_matches(url))
         return self.driver.current_url
 
     def new_window(self, type_: str = "tab"):

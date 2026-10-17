@@ -115,7 +115,9 @@ class ChromeDriver(Chrome):
         if selector.startswith("//") or selector.startswith(".//"):
             selector = f"xpath={selector}"
         loc = root.locator(selector)
-        return ILocator(self, loc) if loc.count() > 0 else None
+        if loc.count() == 0:
+            raise ValueError(f"No element found for selector: {selector}")
+        return ILocator(self, loc)
 
     def findElements(self, selector, base=None):
         if selector.startswith("//") or selector.startswith(".//"):
@@ -236,7 +238,7 @@ class ChromeDriver(Chrome):
     # ============================================================
     # Téléchargement
     # ============================================================
-    def download(self, bouton) -> None:
+    def download(self, bouton) -> str:
         for f in os.listdir(DOWNLOAD_DIR):
             os.remove(os.path.join(DOWNLOAD_DIR, f))
         # self.execute_script("arguments[0].click();", bouton)

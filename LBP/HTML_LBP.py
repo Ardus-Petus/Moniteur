@@ -17,7 +17,7 @@ class HTML_LBP(HTML):
 
     
     def __init__(self, driver):
-        super().__init__(self.URL, driver)
+        super().__init__(driver)
 
         # Saisie de l'identifiant et du mot de passe, puis validation de la connexion
         if len(sys.argv) == 3:
@@ -39,7 +39,7 @@ class HTML_LBP(HTML):
         # Retourne la liste des comptes disponibles
         options = self.findElements('select#liste-comptes>option') #liste des options du select>option
         self.dict_comptes = {i.text:i for i in options}   # on mémorise dans un dictionnaire les comptes disponibles
-        return self.dict_comptes.keys()                   # clé = nom du compte, valeur = élément option correspondant
+        return list(self.dict_comptes.keys())             # clé = nom du compte, valeur = élément option correspondant
 
     def charger_page_releve(self, compte) -> None:
         assert self.chrome.current_url == self.url_page_liste_comptes, "La page des comptes n'est pas chargée"
@@ -56,7 +56,9 @@ class HTML_LBP(HTML):
     def waitForCnxComptes(self) -> None:
         """Attend que la page Comptes et Contrats soit chargée."""
         self.waitFor(self.CNXCOMPTE, self.DELAY)
-        self.url_page_liste_comptes = self.findElement('h3.title>a').get_attribute('href')
+        lien = self.findElement('h3.title>a')
+        assert lien is not None, "Lien vers la liste des comptes introuvable"
+        self.url_page_liste_comptes = lien.get_attribute('href')
     
     def waitForRelevé(self) -> None:                        
         # Attend que la page Relevé soit chargée.
